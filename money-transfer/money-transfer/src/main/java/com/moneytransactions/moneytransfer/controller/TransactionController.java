@@ -18,15 +18,6 @@ public class TransactionController {
   public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
-    /**
-    @RequestMapping(value = "/dummyTest", method = {RequestMethod.GET, RequestMethod.POST})
-    public String handleTransactionRequest(@RequestBody(required = false) Transaction transaction) {
-        if (transaction != null) {
-            System.out.println(transaction);
-        }
-        return "12345";
-    }
-    **/
     @PostMapping("/transferMoney")
     public ResponseEntity<String> transferMoney(@RequestBody Transaction transaction) {
         // Call the moneyTransfer method of the TransactionService and handle any exceptions
@@ -47,4 +38,5 @@ public class TransactionController {
     }
 
 }
-//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": 30.00 }" "http://localhost:8080/transferMoney"
+
+//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00" }" "http://localhost:8080/transferMoney"

@@ -22,6 +22,9 @@ public class Account {
         this.currency = currency;
         this.createdAt = LocalDateTime.now();
     }
+    public Account(){
+
+    }
     public Long getId() {
         return Id;
     }

@@ -9,6 +9,7 @@ import java.lang.Long;
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // database should generate the ID value automatically.
+    @Column(name = "transaction_id")
     private Long id;   // PRIMARY KEY
     private BigDecimal amount; //transaction amount
     private String currency; /*TO DO: enum?*/
@@ -25,6 +26,10 @@ public class Transaction {
         this.targetAccountId = targetAccountId;
         this.amount = amount;
         this.currency = currency;
+    }
+
+    public Transaction() {
+
     }
 
 
