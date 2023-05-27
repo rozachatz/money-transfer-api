@@ -23,6 +23,16 @@ curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \
 This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
 
 ## Architecture
+### Presentation Layer (Controller):
+
+### Service Layer:
+
+### Repository Layer:
+
+### Entity Layer:
+
+# Exception Handling:
+Defines exception classes for different error scenarios.
 
 ## Database
 ### Accessing the H2 Console
