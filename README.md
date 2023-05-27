@@ -25,7 +25,7 @@ This curl command is used to initiate a transfer of 30.00 EUR (default currency)
 ## Architecture
 
 ## Database
-## Accessing the H2 Console
+### Accessing the H2 Console
 To access the H2 console for the MoneyTransfer API, follow these steps:
 1. Start the MoneyTransfer API application.
 2. Open a web browser.
