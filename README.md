@@ -39,7 +39,9 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
 Once you are logged in to the H2 console, you can view and interact with the database used by the MoneyTransfer API.
 
 ### Data Model
+In this section, you will find an overview of the entities (or tables) used in the application's data model.
 #### Account Entity
+The Account entity represents a bank account and has the following attributes:
 
 | Field     | Description                    |
 |-----------|--------------------------------|
@@ -49,6 +51,7 @@ Once you are logged in to the H2 console, you can view and interact with the dat
 | createdAt | Date and time when the account was created |
 
 ##### Transaction Entity
+The Transaction entity represents a financial transaction between two accounts and includes the following attributes:
 
 | Field            | Description                          |
 |------------------|--------------------------------------|
