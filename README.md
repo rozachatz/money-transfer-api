@@ -59,17 +59,6 @@ This curl command is used to initiate a transfer of 30.00 EUR (default currency)
 - Defines exception classes to handle different error scenarios.
 
 ## Database
-### Accessing the H2 Console
-To access the H2 console for the MoneyTransfer API, follow these steps:
-1. Start the MoneyTransfer API application.
-2. Open a web browser.
-3. Enter the following URL: "http://localhost:8080/h2-console".
-4. In the login page of the H2 console, configure the following settings:
-   - JDBC URL: `jdbc:h2:mem:testdb`
-   - Username: `sa`
-   - Password: (leave it empty)
-5. Click the "Connect" button to log in to the H2 console.
-
 Once you are logged in to the H2 console, you can view and interact with the database used by the MoneyTransfer API.
 
 ### Data Model
@@ -95,6 +84,16 @@ The Transaction entity represents a financial transaction between two accounts a
 | amount           | Amount being transferred              |
 | currency         | Currency of the transaction           |
 
+### Accessing the H2 Console
+To access the H2 console for the MoneyTransfer API, follow these steps:
+1. Start the MoneyTransfer API application.
+2. Open a web browser.
+3. Enter the following URL: "http://localhost:8080/h2-console".
+4. In the login page of the H2 console, configure the following settings:
+   - JDBC URL: `jdbc:h2:mem:testdb`
+   - Username: `sa`
+   - Password: (leave it empty)
+5. Click the "Connect" button to log in to the H2 console.
 
 ## Testing
 The `ApplicationTests.java` file located in the `service` package at `src/test/java/service` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
