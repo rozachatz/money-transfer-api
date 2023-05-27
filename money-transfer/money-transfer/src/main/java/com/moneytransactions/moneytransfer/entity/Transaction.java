@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.lang.Long;
 
-@Entity
+@Entity //JPA entity: class mapped to a database table (accessed via JDBC driver)
 @Table(name = "transactions")
 public class Transaction {
     @Id

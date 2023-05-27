@@ -3,7 +3,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity //JPA entity
 @Table(name = "accounts")
 public class Account {
     @Id
