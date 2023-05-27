@@ -3,19 +3,20 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Technologies](#technologies)
-- [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
+- [Database](#database)
+    - [Data Model](#data-model)
+      - [Account Entity](#account-entity)
+      - [Transaction Entity](#transaction-entity)
+    -[Accessing the H2 Console](#accessing-the-h2-console)
 - [Architecture](#architecture)
-  - [Presentation Layer (Controller)](#presentation-layer-controller)
+  - [Presentation Layer](#presentation-layer)
+  -[Controller](#controller)
+  -[Data Transfer Object (DTO)](#data-transfer-object-dto)
   - [Service Layer](#service-layer)
   - [Repository Layer](#repository-layer)
   - [Entity Layer](#entity-layer)
-  - [Exception Handling](#exception-handling)
-- [Database](#database)
-  - [Accessing the H2 Console](#accessing-the-h2-console)
-  - [Data Model](#data-model)
-    - [Account Entity](#account-entity)
-    - [Transaction Entity](#transaction-entity)
+  - [Exception Package](#exception-package)
 - [Testing](#testing)
 - [Deployment](#deployment)
 
@@ -36,27 +37,6 @@ curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \
 ````
 
 This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
-
-## Architecture
-### Presentation Layer:
-- **Controller**: Acts as an intermediary between the client (Java program) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
-- **Data Transfer Object (DTO)**: Container that represents the data transferred between the client and the server.
-
-### Service Layer:
-- Contains the business logic of the application.
-- Performs operations and processes data based on the requests received from the Presentation Layer.
-
-### Repository Layer:
-- Provides an interface to interact with the database.
-- Performs query and CRUD (Create, Read, Update, Delete) operations.
-- Saves and retrieves data from database. 
-
-### Entity Layer:
-- Represents the data model of the application.
-- Defines the structure and relationships between entities (tables) in the database.
-
-### Exception Package:
-- Defines exception classes to handle different error scenarios.
 
 ## Database
 ### Data Model
@@ -92,6 +72,27 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
    - Username: `sa`
    - Password: (leave it empty)
 5. Click the "Connect" button to log in to the H2 console.
+
+## Architecture
+### Presentation Layer:
+- **Controller**: Acts as an intermediary between the client (Java program) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
+- **Data Transfer Object (DTO)**: Container that represents the data transferred between the client and the server.
+
+### Service Layer:
+- Contains the business logic of the application.
+- Performs operations and processes data based on the requests received from the Presentation Layer.
+
+### Repository Layer:
+- Provides an interface to interact with the database.
+- Performs query and CRUD (Create, Read, Update, Delete) operations.
+- Saves and retrieves data from database. 
+
+### Entity Layer:
+- Represents the data model of the application.
+- Defines the structure and relationships between entities (tables) in the database.
+
+### Exception Package:
+- Defines exception classes to handle different error scenarios.
 
 ## Testing
 The `ApplicationTests.java` file located in the `service` package at `src/test/java/service` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
