@@ -4,7 +4,9 @@
 
 
 ## Technologies
-
+* Java
+* Spring Boot
+* Maven
 
 ## Getting Started
 
