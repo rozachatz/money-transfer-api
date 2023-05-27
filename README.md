@@ -25,7 +25,6 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
 Once you are logged in to the H2 console, you can view and interact with the database used by the MoneyTransfer API.
 
 ## API Documentation
-### Making Requests
 You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
 
 ````bash
