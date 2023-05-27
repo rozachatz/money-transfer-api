@@ -7,6 +7,7 @@
 * Java
 * Spring Boot
 * Maven
+* H2 (Embedded Database)
 
 ## Getting Started
 
