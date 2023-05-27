@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 public class TransactionService { //responsible for business logic, error handling
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
-    @Autowired  //ensure that required dependencies are available
     public TransactionService(AccountRepository accountRepository,TransactionRepository transactionRepository){
             this.accountRepository = accountRepository;
             this.transactionRepository = transactionRepository;
@@ -30,7 +29,7 @@ public class TransactionService { //responsible for business logic, error handli
         Account targetAccount = accountRepository.findById(targetAccountId)
                 .orElseThrow(()->new AccountNotFoundException("Target account not found."));
 
-        Transaction transaction = new Transaction(sourceAccountId, targetAccountId, amount, "EUR");
+        Transaction transaction = new Transaction(sourceAccount, targetAccount, amount, "EUR");
 
         if (!sourceAccount.equals(targetAccount)) {
             if (sourceAccount.getBalance().compareTo(amount) < 0) {  // AC2

@@ -14,29 +14,25 @@ public class Transaction {
     private BigDecimal amount; //transaction amount
     private String currency; /*TO DO: enum?*/
 
-    // Foreign keys
-    @Column(name = "source_account_id")
-    private Long sourceAccountId;
+    /* Foreign keys
+    / @Column(name = "source_account_id")
+    / private Long sourceAccountId;
 
-    @Column(name = "target_account_id")
-    private Long targetAccountId;
+   / @Column(name = "target_account_id")
+   / private Long targetAccountId;*/
 
-    public Transaction(Long sourceAccountId, Long targetAccountId, BigDecimal amount, String currency) {
-        this.sourceAccountId = sourceAccountId;
-        this.targetAccountId = targetAccountId;
+    @ManyToOne()
+    @JoinColumn(name="source_account_id", referencedColumnName = "account_id")
+    private Account targetAccount;
+
+    @ManyToOne()
+    @JoinColumn(name="target_account_id", referencedColumnName = "account_id")
+    private Account sourceAccount;
+    public Transaction(Account sourceAccount, Account targetAccount, BigDecimal amount, String currency) {
+        this.sourceAccount = sourceAccount;
+        this.targetAccount = targetAccount;
         this.amount = amount;
         this.currency = currency;
     }
-    public Transaction() {
 
-    }
-    public BigDecimal getAmount() {
-        return amount;
-    }
-    public Long getSourceAccountId() {
-        return sourceAccountId;
-    }
-    public Long getTargetAccountId() {
-        return targetAccountId;
-    }
 }

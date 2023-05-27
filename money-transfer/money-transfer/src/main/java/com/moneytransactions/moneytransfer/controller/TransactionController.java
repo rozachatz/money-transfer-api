@@ -1,6 +1,5 @@
 package com.moneytransactions.moneytransfer.controller;
-
-import com.moneytransactions.moneytransfer.entity.Transaction;
+import com.moneytransactions.moneytransfer.dto.TransferRequest;
 import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
 import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
@@ -8,8 +7,6 @@ import com.moneytransactions.moneytransfer.service.TransactionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-
 @RestController
 
 public class TransactionController {
@@ -19,13 +16,13 @@ public class TransactionController {
     }
 
     @PostMapping("/transferMoney") //endpoint
-    public ResponseEntity<String> transferMoney(@RequestBody Transaction transaction) {
+    public ResponseEntity<String> transferMoney(@RequestBody TransferRequest transferRequest) {
         // Call the moneyTransfer method of the TransactionService and handle any exceptions
         try {
             transactionService.moneyTransfer(
-                    transaction.getSourceAccountId(),
-                    transaction.getTargetAccountId(),
-                    transaction.getAmount()
+                    transferRequest.getSourceAccountId(),
+                    transferRequest.getTargetAccountId(),
+                    transferRequest.getAmount()
             );
             return ResponseEntity.ok("Money transfer successful");
         } catch (InsufficientBalanceException e) {
@@ -39,4 +36,4 @@ public class TransactionController {
 
 }
 
-//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00", \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
+//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
