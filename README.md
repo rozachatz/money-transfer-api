@@ -59,8 +59,6 @@ This curl command is used to initiate a transfer of 30.00 EUR (default currency)
 - Defines exception classes to handle different error scenarios.
 
 ## Database
-Once you are logged in to the H2 console, you can view and interact with the database used by the MoneyTransfer API.
-
 ### Data Model
 In this section, you will find an overview of the entities (or tables) used in the application's data model.
 #### Account Entity
