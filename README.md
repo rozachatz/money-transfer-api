@@ -41,16 +41,24 @@ curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \
 This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
 
 ## Architecture
-### Presentation Layer (Controller):
+### Presentation Layer:
+- **Controller**: Handles incoming requests from the client (Java program) and communicates with the server (localhost:8080).
 
 ### Service Layer:
+- Contains the business logic of the application.
+- Performs operations and processes data based on the requests received from the Presentation Layer.
 
 ### Repository Layer:
+- Provides an interface to interact with the database.
+- Performs query and CRUD (Create, Read, Update, Delete) operations.
+- Saves and retrieves data from database. 
 
 ### Entity Layer:
+- Represents the data model of the application.
+- Defines the structure and relationships between entities (tables) in the database.
 
-### Exception Handling:
-Defines exception classes for different error scenarios.
+### Exception Package:
+- Defines exception classes to handle different error scenarios.
 
 ## Database
 ### Accessing the H2 Console
