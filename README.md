@@ -1,2 +1,24 @@
-# money-transfer-api
-This project is a Spring Boot-based microservice that handles financial transactions.
+# MoneyTransfer API
+
+## Introduction
+
+
+## Technologies
+
+
+## Getting Started
+
+
+## API Documentation
+
+
+## Architecture
+
+
+## Database
+
+
+## Testing
+
+
+## Deployment
