@@ -42,7 +42,7 @@ This curl command is used to initiate a transfer of 30.00 EUR (default currency)
 
 ## Architecture
 ### Presentation Layer:
-- **Controller**: Handles incoming requests from the client (Java program) and communicates with the server (localhost:8080).
+- **Controller**: Acts as an intermediary between the client (Java program) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
 - **Data Transfer Object (DTO)**: Container that represents the data transferred between the client and the server.
 
 ### Service Layer:
