@@ -20,16 +20,13 @@
 - [Deployment](#deployment)
 
 ## Introduction
+This project is a simple microservice that handles financial transactions between bank accounts. In this README, you will find information about the project architecture, testing and other relevant details.
 
 ## Technologies
 * Java
 * Spring Boot
 * Maven
 * H2 (Embedded Database)
-
-## Getting Started
-
-
 
 ## API Documentation
 You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
@@ -108,5 +105,5 @@ The mock tests cover the following ACs:
 - AC 3: Transfer between the same account
 - AC 4: One or more of the accounts does not exist
 
-## Deployment
-**TO DO: Create a Docker container for easy deployment across different environments.**
+## Future Containerization
+In future versions, a Docker container will be provided for easier installation and running of the application in different environments. Stay tuned for updates on containerization.
