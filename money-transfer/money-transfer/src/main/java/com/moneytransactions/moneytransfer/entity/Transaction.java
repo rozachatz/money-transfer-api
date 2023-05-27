@@ -17,10 +17,11 @@ public class Transaction {
     // FOREIGN KEYS
     @ManyToOne()
     @JoinColumn(name="source_account_id", referencedColumnName = "account_id")
-    private Account targetAccount;
+    private Account sourceAccount;
     @ManyToOne()
     @JoinColumn(name="target_account_id", referencedColumnName = "account_id")
-    private Account sourceAccount;
+    private Account targetAccount;
+
     public Transaction(Account sourceAccount, Account targetAccount, BigDecimal amount, String currency) {
         this.sourceAccount = sourceAccount;
         this.targetAccount = targetAccount;
