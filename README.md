@@ -93,8 +93,8 @@ The Transaction entity represents a financial transaction between two accounts a
 | Field            | Description                          |
 |------------------|--------------------------------------|
 | transaction_id   | Unique identifier of the transaction |
-| sourceAccount_id  | ID of the account sending the funds   |
-| targetAccount_id  | ID of the account receiving the funds |
+| source_account_id  | ID of the account sending the funds   |
+| target_account_id  | ID of the account receiving the funds |
 | amount           | Amount being transferred              |
 | currency         | Currency of the transaction           |
 
