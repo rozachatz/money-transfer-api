@@ -1,5 +1,24 @@
 # MoneyTransfer API
 
+## Table of Contents
+- [Introduction](#introduction)
+- [Technologies](#technologies)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
+- [Architecture](#architecture)
+  - [Presentation Layer (Controller)](#presentation-layer-controller)
+  - [Service Layer](#service-layer)
+  - [Repository Layer](#repository-layer)
+  - [Entity Layer](#entity-layer)
+  - [Exception Handling](#exception-handling)
+- [Database](#database)
+  - [Accessing the H2 Console](#accessing-the-h2-console)
+  - [Data Model](#data-model)
+    - [Account Entity](#account-entity)
+    - [Transaction Entity](#transaction-entity)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- 
 ## Introduction
 
 
