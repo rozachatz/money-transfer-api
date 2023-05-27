@@ -3,33 +3,31 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Technologies](#technologies)
-- [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
+- [Database](#database)
+    - [Data Model](#data-model)
+      - [Account Entity](#account-entity)
+      - [Transaction Entity](#transaction-entity)
+    - [Accessing the H2 Console](#accessing-the-h2-console)
 - [Architecture](#architecture)
-  - [Presentation Layer (Controller)](#presentation-layer-controller)
+  - [Presentation Layer](#presentation-layer)
+    - [Controller](#controller)
+    - [Data Transfer Object (DTO)](#data-transfer-object-dto)
   - [Service Layer](#service-layer)
   - [Repository Layer](#repository-layer)
   - [Entity Layer](#entity-layer)
-  - [Exception Handling](#exception-handling)
-- [Database](#database)
-  - [Accessing the H2 Console](#accessing-the-h2-console)
-  - [Data Model](#data-model)
-    - [Account Entity](#account-entity)
-    - [Transaction Entity](#transaction-entity)
+  - [Exception Package](#exception-package)
 - [Testing](#testing)
 - [Deployment](#deployment)
 
 ## Introduction
+This project is a simple microservice that handles financial transactions between bank accounts. In this README, you will find information about the project architecture, testing and other relevant details.
 
 ## Technologies
 * Java
 * Spring Boot
 * Maven
 * H2 (Embedded Database)
-
-## Getting Started
-
-
 
 ## API Documentation
 You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
@@ -40,19 +38,30 @@ curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \
 
 This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
 
-## Architecture
-### Presentation Layer (Controller):
-
-### Service Layer:
-
-### Repository Layer:
-
-### Entity Layer:
-
-### Exception Handling:
-Defines exception classes for different error scenarios.
-
 ## Database
+### Data Model
+In this section, you will find an overview of the entities (or tables) used in the application's data model.
+#### Account Entity
+The Account entity represents a bank account and has the following attributes:
+
+| Field     | Description                    |
+|-----------|--------------------------------|
+| account_id        | Unique identifier of the account |
+| balance           | Decimal number representing the account balance |
+| currency          | Currency of the account (e.g., "GBP") |
+| createdAt         | Date and time when the account was created |
+
+##### Transaction Entity
+The Transaction entity represents a financial transaction between two accounts and includes the following attributes:
+
+| Field            | Description                          |
+|------------------|--------------------------------------|
+| transaction_id   | Unique identifier of the transaction |
+| source_account_id  | ID of the account sending the funds   |
+| target_account_id  | ID of the account receiving the funds |
+| amount           | Amount being transferred              |
+| currency         | Currency of the transaction           |
+
 ### Accessing the H2 Console
 To access the H2 console for the MoneyTransfer API, follow these steps:
 1. Start the MoneyTransfer API application.
@@ -64,31 +73,26 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
    - Password: (leave it empty)
 5. Click the "Connect" button to log in to the H2 console.
 
-Once you are logged in to the H2 console, you can view and interact with the database used by the MoneyTransfer API.
+## Architecture
+### Presentation Layer:
+- **Controller**: Acts as an intermediary between the client (Java program) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
+- **Data Transfer Object (DTO)**: Container that represents the data transferred between the client and the server.
 
-### Data Model
-In this section, you will find an overview of the entities (or tables) used in the application's data model.
-#### Account Entity
-The Account entity represents a bank account and has the following attributes:
+### Service Layer:
+- Contains the business logic of the application.
+- Performs operations and processes data based on the requests received from the Presentation Layer.
 
-| Field     | Description                    |
-|-----------|--------------------------------|
-| accountId        | Unique identifier of the account |
-| balance           | Decimal number representing the account balance |
-| currency          | Currency of the account (e.g., "GBP") |
-| createdAt         | Date and time when the account was created |
+### Repository Layer:
+- Provides an interface to interact with the database.
+- Performs query and CRUD (Create, Read, Update, Delete) operations.
+- Saves and retrieves data from database. 
 
-##### Transaction Entity
-The Transaction entity represents a financial transaction between two accounts and includes the following attributes:
+### Entity Layer:
+- Represents the data model of the application.
+- Defines the structure and relationships between entities (tables) in the database.
 
-| Field            | Description                          |
-|------------------|--------------------------------------|
-| transactionId   | Unique identifier of the transaction |
-| sourceAccountId  | ID of the account sending the funds   |
-| targetAccountId  | ID of the account receiving the funds |
-| amount           | Amount being transferred              |
-| currency         | Currency of the transaction           |
-
+### Exception Package:
+- Defines exception classes to handle different error scenarios.
 
 ## Testing
 The `ApplicationTests.java` file located in the `service` package at `src/test/java/service` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
@@ -99,4 +103,5 @@ The mock tests cover the following ACs:
 - AC 3: Transfer between the same account
 - AC 4: One or more of the accounts does not exist
 
-## Deployment
+## Future Containerization
+In future versions, a Docker container will be provided for easier installation and running of the application in different environments. Stay tuned for updates on containerization.
