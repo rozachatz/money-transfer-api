@@ -31,7 +31,7 @@ This curl command is used to initiate a transfer of 30.00 EUR (default currency)
 
 ### Entity Layer:
 
-# Exception Handling:
+### Exception Handling:
 Defines exception classes for different error scenarios.
 
 ## Database
