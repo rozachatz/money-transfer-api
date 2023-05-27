@@ -14,17 +14,10 @@ public class Transaction {
     private BigDecimal amount; //transaction amount
     private String currency; /*TO DO: enum?*/
 
-    /* Foreign keys
-    / @Column(name = "source_account_id")
-    / private Long sourceAccountId;
-
-   / @Column(name = "target_account_id")
-   / private Long targetAccountId;*/
-
+    // FOREIGN KEYS
     @ManyToOne()
     @JoinColumn(name="source_account_id", referencedColumnName = "account_id")
     private Account targetAccount;
-
     @ManyToOne()
     @JoinColumn(name="target_account_id", referencedColumnName = "account_id")
     private Account sourceAccount;

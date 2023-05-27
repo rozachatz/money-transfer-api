@@ -20,9 +20,9 @@ public class TransactionController {
         // Call the moneyTransfer method of the TransactionService and handle any exceptions
         try {
             transactionService.moneyTransfer(
-                    transferRequest.getSourceAccountId(),
-                    transferRequest.getTargetAccountId(),
-                    transferRequest.getAmount()
+                    transferRequest.sourceAccountId(),
+                    transferRequest.targetAccountId(),
+                    transferRequest.amount()
             );
             return ResponseEntity.ok("Money transfer successful");
         } catch (InsufficientBalanceException e) {
