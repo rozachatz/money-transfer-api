@@ -21,7 +21,6 @@
 
 ## Introduction
 
-
 ## Technologies
 * Java
 * Spring Boot
