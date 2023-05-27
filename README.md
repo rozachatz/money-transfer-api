@@ -18,7 +18,7 @@
     - [Transaction Entity](#transaction-entity)
 - [Testing](#testing)
 - [Deployment](#deployment)
-- 
+
 ## Introduction
 
 
