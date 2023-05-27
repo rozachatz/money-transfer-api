@@ -30,6 +30,7 @@ public class ApplicationTests {
     }
     @Test
     public void testHappyTransfer_Successful() {
+
         // Create two test accounts with initial balances
         Account sourceAccount = new Account(new BigDecimal("100.00"),"EUR");
         sourceAccount.setId(1L); // Assign an ID to the source account
@@ -48,7 +49,7 @@ public class ApplicationTests {
         assertEquals(new BigDecimal("70.00"), sourceAccount.getBalance());
         assertEquals(new BigDecimal("80.00"), targetAccount.getBalance());
 
-        // Verify that the transaction is saved
+        // Verify that one transaction is saved
         verify(transactionRepository, times(1)).save(any(Transaction.class));
     }
 
@@ -66,9 +67,9 @@ public class ApplicationTests {
         when(accountRepository.findById(targetAccount.getId())).thenReturn(Optional.of(targetAccount));
 
         assertThrows(InsufficientBalanceException.class, () -> {
-            // Call the method that is expected to throw the exception
             transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), new BigDecimal("120.00")); // amount > balance
-        });
+        });  //second argument: code block that is expected to throw the exception
+            // lambda usage: pass function as argument
 
         //Verify the balances of source & target do not change
         assertEquals(new BigDecimal("100.00"), sourceAccount.getBalance());
@@ -88,7 +89,6 @@ public class ApplicationTests {
         when(accountRepository.findById(targetAccount.getId())).thenReturn(Optional.of(targetAccount));
 
         assertThrows(SameAccountException.class, () -> {
-            // Call the method that is expected to throw the exception
             transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), new BigDecimal("100.00"));
         });
 
@@ -110,7 +110,6 @@ public class ApplicationTests {
         when(accountRepository.findById(nonExistingAccountId)).thenReturn(Optional.empty());
 
         assertThrows(AccountNotFoundException.class, () -> {
-            // Call the method that is expected to throw the exception
             transactionService.moneyTransfer(sourceAccount.getId(), nonExistingAccountId, new BigDecimal("100.00"));
         });
 

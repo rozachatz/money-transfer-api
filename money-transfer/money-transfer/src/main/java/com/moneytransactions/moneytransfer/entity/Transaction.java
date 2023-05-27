@@ -27,29 +27,15 @@ public class Transaction {
         this.amount = amount;
         this.currency = currency;
     }
-
     public Transaction() {
 
     }
-
-
-    // GETTERS AND SETTERS
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public BigDecimal getAmount() {
         return amount;
     }
-
-    public String getCurrency() {
-        return currency;
-    }
-
     public Long getSourceAccountId() {
         return sourceAccountId;
     }
-
     public Long getTargetAccountId() {
         return targetAccountId;
     }

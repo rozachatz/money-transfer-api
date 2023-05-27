@@ -1,5 +1,4 @@
 package com.moneytransactions.moneytransfer.service;
-
 import com.moneytransactions.moneytransfer.entity.Account;
 import com.moneytransactions.moneytransfer.entity.Transaction;
 import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceException;
@@ -13,51 +12,44 @@ import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
 import java.math.BigDecimal;
 
 @Service
-@Transactional
-public class TransactionService {
-    //responsible for business logic, error handling
-    private final AccountRepository targetAccountRepository;
-    private final AccountRepository sourceAccountRepository;
+@Transactional // rollback if error occurs, data consistency
+public class TransactionService { //responsible for business logic, error handling
+    private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
-    @Autowired
-    public TransactionService(AccountRepository targetAccountRepository, AccountRepository sourceAccountRepository,TransactionRepository transactionRepository){
-            this.targetAccountRepository = targetAccountRepository;
-            this.sourceAccountRepository = sourceAccountRepository;
+    @Autowired  //ensure that required dependencies are available
+    public TransactionService(AccountRepository accountRepository,TransactionRepository transactionRepository){
+            this.accountRepository = accountRepository;
             this.transactionRepository = transactionRepository;
     }
 
     public void moneyTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) {
-        // AC4 and Given in AC1-3
-        Account sourceAccount = sourceAccountRepository.findById(sourceAccountId)
+        // checking if accounts exist
+        Account sourceAccount = accountRepository.findById(sourceAccountId)
                 .orElseThrow(()->new AccountNotFoundException("Source account not found."));
 
-        Account targetAccount = targetAccountRepository.findById(targetAccountId)
+        Account targetAccount = accountRepository.findById(targetAccountId)
                 .orElseThrow(()->new AccountNotFoundException("Target account not found."));
 
         Transaction transaction = new Transaction(sourceAccountId, targetAccountId, amount, "EUR");
 
         if (!sourceAccount.equals(targetAccount)) {
-            if (sourceAccount.getBalance().compareTo(amount) < 0) {
-                // AC2
+            if (sourceAccount.getBalance().compareTo(amount) < 0) {  // AC2
                 throw new InsufficientBalanceException("Insufficient balance in the source account");
             }
-            else {
-                // AC1: Happy Transfer!
-                // Update target account by crediting the amount
+            else { //AC1
+                // update target account by crediting the amount
                 targetAccount.credit(amount);
-                targetAccountRepository.save(targetAccount);
+                accountRepository.save(targetAccount);
 
-                // Update source account by debiting the amount
+                // update source account by debiting the amount
                 sourceAccount.debit(amount);
-                sourceAccountRepository.save(sourceAccount);
+                accountRepository.save(sourceAccount);
 
-                // save the transaction only if successful
+                // save only if successful
                 transactionRepository.save(transaction);
-
                 System.out.println("Happy path: transaction is completed!");
             }
-        } else{
-            // AC3
+        } else{ // AC3
             throw new SameAccountException("Transfer between the same account is not allowed");
         }
 

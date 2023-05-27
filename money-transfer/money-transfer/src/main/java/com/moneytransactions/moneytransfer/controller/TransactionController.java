@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 public class TransactionController {
     private final TransactionService transactionService;
-
-  public TransactionController(TransactionService transactionService) {
-        this.transactionService = transactionService;
+  public TransactionController(TransactionService transactionService) { //default: singleton scope
+      this.transactionService = transactionService;
     }
-    @PostMapping("/transferMoney")
+
+    @PostMapping("/transferMoney") //endpoint
     public ResponseEntity<String> transferMoney(@RequestBody Transaction transaction) {
         // Call the moneyTransfer method of the TransactionService and handle any exceptions
         try {
@@ -39,4 +39,4 @@ public class TransactionController {
 
 }
 
-//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00" }" "http://localhost:8080/transferMoney"
+//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00", \"amount\": "30.00"}" "http://localhost:8080/transferMoney"

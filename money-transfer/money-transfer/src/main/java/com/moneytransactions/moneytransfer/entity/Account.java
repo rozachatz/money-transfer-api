@@ -1,11 +1,7 @@
 package com.moneytransactions.moneytransfer.entity;
-
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Entity
 @Table(name = "accounts")
@@ -34,10 +30,11 @@ public class Account {
     public BigDecimal getBalance() {
         return balance;
     }
+
+    // debit, credit methods
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
     }
-
     public void debit(BigDecimal amount) {
         this.balance=balance.subtract(amount);
     }
