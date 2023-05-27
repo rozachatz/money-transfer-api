@@ -11,6 +11,20 @@
 
 ## Getting Started
 
+
+
+## API Documentation
+You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
+
+````bash
+curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00", \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
+````
+
+This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
+
+## Architecture
+
+## Database
 ## Accessing the H2 Console
 To access the H2 console for the MoneyTransfer API, follow these steps:
 1. Start the MoneyTransfer API application.
@@ -24,19 +38,25 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
 
 Once you are logged in to the H2 console, you can view and interact with the database used by the MoneyTransfer API.
 
-## API Documentation
-You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
+### Data Model
+#### Account Entity
 
-````bash
-curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00", \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
-````
+| Field     | Description                    |
+|-----------|--------------------------------|
+| id        | Unique identifier of the account |
+| balance   | Decimal number representing the account balance |
+| currency  | Currency of the account (e.g., "GBP") |
+| createdAt | Date and time when the account was created |
 
-This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
+##### Transaction Entity
 
-## Architecture
-
-
-## Database
+| Field            | Description                          |
+|------------------|--------------------------------------|
+| id               | Unique identifier of the transaction |
+| sourceAccountId  | ID of the account sending the funds   |
+| targetAccountId  | ID of the account receiving the funds |
+| amount           | Amount being transferred              |
+| currency         | Currency of the transaction           |
 
 
 ## Testing
