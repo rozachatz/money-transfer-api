@@ -92,6 +92,12 @@ The Transaction entity represents a financial transaction between two accounts a
 
 
 ## Testing
+The `ApplicationTests.java` file located in the `service` package at `src/test/java/service` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
 
+The mock tests cover the following ACs:
+- AC 1: Happy path for money transfer between two accounts
+- AC 2: Insufficient balance to process money transfer
+- AC 3: Transfer between the same account
+- AC 4: One or more of the accounts does not exist
 
 ## Deployment
