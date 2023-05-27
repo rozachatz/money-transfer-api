@@ -82,7 +82,7 @@ The Account entity represents a bank account and has the following attributes:
 
 | Field     | Description                    |
 |-----------|--------------------------------|
-| accountId        | Unique identifier of the account |
+| account_id        | Unique identifier of the account |
 | balance           | Decimal number representing the account balance |
 | currency          | Currency of the account (e.g., "GBP") |
 | createdAt         | Date and time when the account was created |
@@ -92,9 +92,9 @@ The Transaction entity represents a financial transaction between two accounts a
 
 | Field            | Description                          |
 |------------------|--------------------------------------|
-| transactionId   | Unique identifier of the transaction |
-| sourceAccountId  | ID of the account sending the funds   |
-| targetAccountId  | ID of the account receiving the funds |
+| transaction_id   | Unique identifier of the transaction |
+| sourceAccount_id  | ID of the account sending the funds   |
+| targetAccount_id  | ID of the account receiving the funds |
 | amount           | Amount being transferred              |
 | currency         | Currency of the transaction           |
 
