@@ -15,7 +15,7 @@
 To access the H2 console for the MoneyTransfer API, follow these steps:
 1. Start the MoneyTransfer API application.
 2. Open a web browser.
-3. Enter the following URL: `http://localhost:8080/h2-console`.
+3. Enter the following URL: "http://localhost:8080/h2-console".
 4. In the login page of the H2 console, configure the following settings:
    - JDBC URL: `jdbc:h2:mem:testdb`
    - Username: `sa`
