@@ -17,20 +17,27 @@ public class TransactionController {
 
     @PostMapping("/transferMoney") //endpoint
     public ResponseEntity<String> transferMoney(@RequestBody TransferRequest transferRequest) {
-        // Call the moneyTransfer method of the TransactionService and handle any exceptions
+
+        /* Call moneyTransfer service method, handle exceptions and response to client. */
+        /* TransferRequest: container */
+
         try {
             transactionService.moneyTransfer(
                     transferRequest.sourceAccountId(),
                     transferRequest.targetAccountId(),
                     transferRequest.amount()
             );
-            return ResponseEntity.ok("Money transfer successful");
-        } catch (InsufficientBalanceException e) {
-            return ResponseEntity.badRequest().body("Insufficient balance in the source account");
-        } catch (AccountNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Source or target account not found");
-        } catch (SameAccountException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Transactions in the same account are not allowed.");
+
+            return ResponseEntity.ok("Successful transfer of funds! :)");
+        }
+        catch (InsufficientBalanceException e) {
+            return ResponseEntity.badRequest().body("Error: Insufficient balance in the source account!");
+        }
+        catch (AccountNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Source or target account not found!");
+        }
+        catch (SameAccountException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Transactions in the same account are not allowed!");
         }
     }
 

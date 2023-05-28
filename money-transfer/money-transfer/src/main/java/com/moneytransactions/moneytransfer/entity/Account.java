@@ -30,7 +30,6 @@ public class Account {
     public BigDecimal getBalance() {
         return balance;
     }
-
     // debit, credit methods
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);

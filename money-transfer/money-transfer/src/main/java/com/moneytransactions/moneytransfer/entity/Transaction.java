@@ -12,9 +12,9 @@ public class Transaction {
     @Column(name = "transaction_id")
     private Long id;   // PRIMARY KEY
     private BigDecimal amount; //transaction amount
-    private String currency; /*TO DO: enum?*/
+    private String currency; /* TO DO: enum + currency exchange */
 
-    // FOREIGN KEYS
+    /* FOREIGN KEYS (Many transactions -> One account) */
     @ManyToOne()
     @JoinColumn(name="source_account_id", referencedColumnName = "account_id")
     private Account sourceAccount;
@@ -28,5 +28,7 @@ public class Transaction {
         this.amount = amount;
         this.currency = currency;
     }
+    private Transaction(){
 
+    }
 }

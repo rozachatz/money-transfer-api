@@ -14,42 +14,53 @@ import java.math.BigDecimal;
 @Service
 @Transactional // rollback if error occurs, data consistency
 public class TransactionService { //responsible for business logic, error handling
+
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+
     public TransactionService(AccountRepository accountRepository,TransactionRepository transactionRepository){
             this.accountRepository = accountRepository;
             this.transactionRepository = transactionRepository;
     }
 
     public void moneyTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) {
-        // checking if accounts exist
+
         Account sourceAccount = accountRepository.findById(sourceAccountId)
-                .orElseThrow(()->new AccountNotFoundException("Source account not found."));
+                .orElseThrow(()->new AccountNotFoundException("Source account not found."));  /* AC4: account not exists */
 
         Account targetAccount = accountRepository.findById(targetAccountId)
-                .orElseThrow(()->new AccountNotFoundException("Target account not found."));
+                .orElseThrow(()->new AccountNotFoundException("Target account not found.")); /* AC4: account not exists */
 
+        //New transaction object
         Transaction transaction = new Transaction(sourceAccount, targetAccount, amount, "EUR");
 
         if (!sourceAccountId.equals(targetAccountId)) {
-            if (sourceAccount.getBalance().compareTo(amount) < 0) {  // AC2
+
+            if (sourceAccount.getBalance().compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
+
                 throw new InsufficientBalanceException("Insufficient balance in the source account");
+
             }
-            else { //AC1
-                // update target account by crediting the amount
+            else { /* AC1: happy path */
+
+                //Credit target & save
                 targetAccount.credit(amount);
                 accountRepository.save(targetAccount);
 
-                // update source account by debiting the amount
+                //Debit src & save
                 sourceAccount.debit(amount);
                 accountRepository.save(sourceAccount);
 
-                // save only if successful
+                /*Save transaction */
                 transactionRepository.save(transaction);
                 System.out.println("Happy path: transaction is completed!");
+
             }
-        } else{ // AC3
+        }
+        else { /* AC3: transfer same account */
+
             throw new SameAccountException("Transfer between the same account is not allowed");
+
         }
 
 
