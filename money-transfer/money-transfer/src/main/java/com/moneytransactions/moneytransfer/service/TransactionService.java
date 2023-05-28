@@ -31,7 +31,7 @@ public class TransactionService { //responsible for business logic, error handli
 
         Transaction transaction = new Transaction(sourceAccount, targetAccount, amount, "EUR");
 
-        if (!sourceAccount.equals(targetAccount)) {
+        if (!sourceAccountId.equals(targetAccountId)) {
             if (sourceAccount.getBalance().compareTo(amount) < 0) {  // AC2
                 throw new InsufficientBalanceException("Insufficient balance in the source account");
             }

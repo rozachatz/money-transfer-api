@@ -9,6 +9,7 @@ import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceExcepti
 import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
 import com.moneytransactions.moneytransfer.repository.AccountRepository;
 import com.moneytransactions.moneytransfer.repository.TransactionRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -23,98 +24,107 @@ public class ApplicationTests {
     private TransactionRepository transactionRepository;
     @InjectMocks
     private TransactionService transactionService;
-
+    private BigDecimal initBalanceSrc;
+    private Account sourceAccount;
     @BeforeEach
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        initBalanceSrc = new BigDecimal("100.00");
+        //Create source account with initial balance
+        sourceAccount = new Account(initBalanceSrc,"EUR");
+        //Assign id to source
+        sourceAccount.setId(1L);
     }
+
     @Test
     public void testHappyTransfer_Successful() {
+        //assign different id to target
+        Account targetAccount = new Account(initBalanceSrc,"EUR");
+        targetAccount.setId(2L);
 
-        // Create two test accounts with initial balances
-        Account sourceAccount = new Account(new BigDecimal("100.00"),"EUR");
-        sourceAccount.setId(1L); // Assign an ID to the source account
-
-        Account targetAccount = new Account(new BigDecimal("50.00"),"EUR");
-        targetAccount.setId(2L); // Assign an ID to the source account
-
-        // Mock the behavior of the repositories
+        //Mock repo behavior
         when(accountRepository.findById(sourceAccount.getId())).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findById(targetAccount.getId())).thenReturn(Optional.of(targetAccount));
 
-        // Perform the money transfer
-        transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), new BigDecimal("30.00"));
+        //Perform money transfer, no exceptions should be thrown
+        BigDecimal amount = initBalanceSrc;
+        Assertions.assertDoesNotThrow( () -> {
+            transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), amount);
+            } );
 
-        // Verify the balances after the transfer
-        assertEquals(new BigDecimal("70.00"), sourceAccount.getBalance());
-        assertEquals(new BigDecimal("80.00"), targetAccount.getBalance());
-
-        // Verify that one transaction is saved
+        //Transaction saved
         verify(transactionRepository, times(1)).save(any(Transaction.class));
+
+        //Verify balances: target credited and src debited
+        assertEquals(initBalanceSrc.subtract(amount), sourceAccount.getBalance());
+        assertEquals(initBalanceSrc.add(amount), targetAccount.getBalance());
+
+
     }
 
     @Test
     public void testInsufficientBalance() {
-        // Create two test accounts with initial balances
-        Account sourceAccount = new Account(new BigDecimal("100.00"),"EUR");
-        sourceAccount.setId(1L); // Assign an ID to the source account
 
-        Account targetAccount = new Account(new BigDecimal("50.00"),"EUR");
-        targetAccount.setId(2L); // Assign an ID to the source account
+        //Assign different id to target
+        Account targetAccount = new Account(initBalanceSrc,"EUR");
+        targetAccount.setId(2L);
 
-        // Mock the behavior of the repositories
+        //Mock the behavior of the repositories
         when(accountRepository.findById(sourceAccount.getId())).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findById(targetAccount.getId())).thenReturn(Optional.of(targetAccount));
 
+        //Perform money transfer, insufficient balance exception should be thrown
+        BigDecimal amount = initBalanceSrc.add(initBalanceSrc); //(amount > initBalanceSrc)
         assertThrows(InsufficientBalanceException.class, () -> {
-            transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), new BigDecimal("120.00")); // amount > balance
-        });  //second argument: code block that is expected to throw the exception
-            // lambda usage: pass function as argument
-
-        //Verify the balances of source & target do not change
-        assertEquals(new BigDecimal("100.00"), sourceAccount.getBalance());
-        assertEquals(new BigDecimal("50.00"), targetAccount.getBalance());
-
-    }
-    @Test
-    public void testTransferSameAccount() {
-        // Create two test accounts with initial balances
-        Account sourceAccount = new Account(new BigDecimal("100.00"),"EUR");
-        sourceAccount.setId(1L); // Assign an ID to the source account
-
-        Account targetAccount = sourceAccount;
-
-        // Mock the behavior of the repositories
-        when(accountRepository.findById(sourceAccount.getId())).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findById(targetAccount.getId())).thenReturn(Optional.of(targetAccount));
-
-        assertThrows(SameAccountException.class, () -> {
-            transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), new BigDecimal("100.00"));
+            transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), amount);
         });
 
-        // Verify the balance of source/target does not change
-        assertEquals(new BigDecimal("100.00"), sourceAccount.getBalance());
+        //Verify that balances remain unchanged
+        assertEquals(initBalanceSrc, sourceAccount.getBalance());
+        assertEquals(initBalanceSrc, targetAccount.getBalance());
 
+        //Verify that no transaction is saved
+        verify(transactionRepository, never()).save(any(Transaction.class));
+    }
+
+    @Test
+    public void testTransferSameAccount() {
+
+        //Mock the behavior of the repositories
+        when(accountRepository.findById(sourceAccount.getId())).thenReturn(Optional.of(sourceAccount));
+
+        //Perform money transfer, same account exception should be thrown
+        assertThrows(SameAccountException.class, () -> {
+            transactionService.moneyTransfer(sourceAccount.getId(), sourceAccount.getId(), sourceAccount.getBalance());
+        });
+
+        //Verify the balance of source/target does not change
+        assertEquals(initBalanceSrc, sourceAccount.getBalance());
+
+        //Verify that no transaction is saved
+        verify(transactionRepository, never()).save(any(Transaction.class));
     }
 
     @Test
     public void testAccountNotFound() {
-        // Create two test accounts with initial balances
-        Account sourceAccount = new Account(new BigDecimal("100.00"),"EUR");
-        sourceAccount.setId(1L); // Assign an ID to the source account
-        Long nonExistingAccountId = 2L; // ID of the non-existing target account
+        //Assign non-existing id to target
+        Long nonExistingAccountId = 2L;
 
-        // Mock the behavior of the repository to return the source account
+        //Mock the behavior of the repository to return the source account
         when(accountRepository.findById(sourceAccount.getId())).thenReturn(Optional.of(sourceAccount));
         // Mock the behavior of the repository to return an empty Optional for the target account
         when(accountRepository.findById(nonExistingAccountId)).thenReturn(Optional.empty());
 
+        //Perform money transfer, non-existing account exception should be thrown
         assertThrows(AccountNotFoundException.class, () -> {
-            transactionService.moneyTransfer(sourceAccount.getId(), nonExistingAccountId, new BigDecimal("100.00"));
+            transactionService.moneyTransfer(sourceAccount.getId(), nonExistingAccountId, initBalanceSrc);
         });
 
-        // Balance of existing amount does not change
-        assertEquals(new BigDecimal("100.00"), sourceAccount.getBalance());
+        //Balance of existing amount does not change
+        assertEquals(initBalanceSrc, sourceAccount.getBalance());
+
+        //Verify that no transaction is saved
+        verify(transactionRepository, never()).save(any(Transaction.class));
 
     }
 
