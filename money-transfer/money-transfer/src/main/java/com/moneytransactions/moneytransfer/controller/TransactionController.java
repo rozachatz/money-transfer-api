@@ -37,7 +37,7 @@ public class TransactionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Source or target account not found!");
         }
         catch (SameAccountException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: Transactions in the same account are not allowed!");
+            return ResponseEntity.badRequest().body("Error: Transactions in the same account are not allowed!");
         }
     }
 

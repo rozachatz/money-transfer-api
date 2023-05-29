@@ -6,7 +6,6 @@ import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
 import com.moneytransactions.moneytransfer.repository.AccountRepository;
 import com.moneytransactions.moneytransfer.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
 import java.math.BigDecimal;
