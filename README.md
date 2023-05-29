@@ -18,7 +18,7 @@
   - [Entity Layer](#entity-layer)
   - [Exception Package](#exception-package)
 - [Testing](#testing)
-- [Deployment](#deployment)
+- [Future Containerization](#futurecontainerization)
 
 ## Introduction
 This project is a simple microservice that handles financial transactions between bank accounts. In this README, you will find information about the project architecture, testing and other relevant details.
@@ -36,7 +36,7 @@ You can interact with the Money Transfer API by sending HTTP requests to the pro
 curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
 ````
 
-This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
+This curl command is used to initiate a transfer of 30.00 EUR (current version: default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
 
 ## Database
 ### Data Model
@@ -101,7 +101,7 @@ The mock tests cover the following ACs:
 - AC 1: Happy path for money transfer between two accounts
 - AC 2: Insufficient balance to process money transfer
 - AC 3: Transfer between the same account
-- AC 4: One or more of the accounts does not exist
+- AC 4: One account (target/source) does not exist
 
 ## Future Containerization
-In future versions, a Docker container will be provided for easier installation and running of the application in different environments. Stay tuned for updates on containerization.
+In future versions, a Docker container will be provided for easier installation and running of the application in different environments.
