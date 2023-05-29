@@ -75,7 +75,7 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
 
 ## Architecture
 ### Presentation Layer:
-- **Controller**: Acts as an intermediary between the client (Java program) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
+- **Controller**: Acts as an intermediary between the client (Curl) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
 - **Data Transfer Object (DTO)**: Container that represents the data transferred between the client and the server.
 
 ### Service Layer:
