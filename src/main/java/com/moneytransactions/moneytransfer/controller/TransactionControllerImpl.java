@@ -16,15 +16,16 @@ public class TransactionControllerImpl implements TransactionController {
         this.transactionServiceImpl = transactionServiceImpl;
     }
 
-    @PostMapping("/transferMoney") //endpoint
+    @PostMapping("/transferMoney") //Endpoint
     public ResponseEntity<String> transferMoney(@RequestBody TransferRequest transferRequest) throws MoneyTransferException {
-        /* Call moneyTransfer service method, handle exceptions and response to client. */
         /* TransferRequest: container */
+        /* Call moneyTransfer service method, response to client. */
         transactionServiceImpl.moneyTransfer(
                 transferRequest.sourceAccountId(),
                 transferRequest.targetAccountId(),
                 transferRequest.amount()
         );
+
         return ResponseEntity.ok("Money transfer was successful");
     }
 }

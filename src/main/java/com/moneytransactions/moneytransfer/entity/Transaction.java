@@ -11,11 +11,13 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID) // (atomically) generated in service (eliminate bottleneck)
     @Column(name = "transaction_id")
-    private UUID id;   // PRIMARY KEY
-    private BigDecimal amount; //transaction amount
-    private String currency; /* TO DO: enum + currency exchange */
+    private UUID id; //PRIMARY KEY
+    private BigDecimal amount; //amount to be transferred
+    private String currency;
 
-    /* FOREIGN KEYS (Many transactions -> One account) */
+    /*
+     * FOREIGN KEYS
+     */
     @ManyToOne()
     @JoinColumn(name = "source_account_id", referencedColumnName = "account_id")
     private Account sourceAccount;
@@ -23,6 +25,9 @@ public class Transaction {
     @JoinColumn(name = "target_account_id", referencedColumnName = "account_id")
     private Account targetAccount;
 
+    /*
+     * CONSTRUCTORS
+     */
     public Transaction(UUID id, Account sourceAccount, Account targetAccount, BigDecimal amount, String currency) {
         this.id = id;
         this.sourceAccount = sourceAccount;

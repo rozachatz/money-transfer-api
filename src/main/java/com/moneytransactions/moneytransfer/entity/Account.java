@@ -11,11 +11,14 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "account_id")
-    private Long Id; // database should generate the ID value automatically.
+    private Long id; // PRIMARY KEY
     private BigDecimal balance;
-    private String currency;
+    private String currency; // TODO: Enum for different currencies
     private LocalDateTime createdAt;
 
+    /*
+     * CONSTRUCTORS
+     */
     public Account(BigDecimal balance, String currency) {
         this.balance = balance;
         this.currency = currency;
@@ -26,18 +29,24 @@ public class Account {
 
     }
 
+    /*
+     * GETTERS AND SETTERS
+     **/
     public Long getId() {
-        return Id;
+        return id;
     }
 
     public void setId(Long id) {
-        Id = id;
+        this.id = id;
     }
 
     public BigDecimal getBalance() {
         return balance;
     }
 
+    /*
+     * FINANCIAL TRANSACTION METHODS
+     */
     // debit, credit methods
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
@@ -46,4 +55,5 @@ public class Account {
     public void debit(BigDecimal amount) {
         this.balance = balance.subtract(amount);
     }
+    // TODO: Currency Exchange Mechanism (internal storage or API)
 }
