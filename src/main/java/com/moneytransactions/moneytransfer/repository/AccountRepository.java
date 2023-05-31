@@ -10,11 +10,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
-
-    // responsible for database query operations (+CRUD: Create, Read, Update, Delete).
+    //responsible for Create, Read (SELECT), Update, Delete and @Query operations
+    //provides access to the database
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Account a WHERE a.id IN :ids")
     List<Account> findAllByIdAndLock(@Param("ids") List<Long> ids);
-
-
 }

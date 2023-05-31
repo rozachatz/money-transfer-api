@@ -47,7 +47,6 @@ public class Account {
     /*
      * FINANCIAL TRANSACTION METHODS
      */
-    // debit, credit methods
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
     }

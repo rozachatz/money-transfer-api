@@ -27,7 +27,7 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
         this.transactionRepository = transactionRepository;
     }
 
-    @Transactional // ACID
+    @Transactional
     public void moneyTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
         List<Account> accounts = validateTransfer(sourceAccountId, targetAccountId, amount);
 
