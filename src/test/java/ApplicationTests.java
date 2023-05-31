@@ -22,7 +22,7 @@ public class ApplicationTests {
     @Mock
     private TransactionRepository transactionRepository;
     @InjectMocks
-    private TransactionService transactionService;
+    private TransactionServiceImpl transactionServiceImpl;
     private Account sourceAccount;
 
     @BeforeEach
@@ -42,7 +42,7 @@ public class ApplicationTests {
         Mockito.when(accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccount.getId(), targetAccount.getId()))).thenReturn(mockAccounts);
 
         //Perform money transfer, no exceptions should be thrown
-        Assertions.assertDoesNotThrow(() -> transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE));
+        Assertions.assertDoesNotThrow(() -> transactionServiceImpl.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE));
 
         //Transaction saved
         Mockito.verify(transactionRepository, Mockito.times(1)).save(ArgumentMatchers.any(Transaction.class));
@@ -62,7 +62,7 @@ public class ApplicationTests {
         Mockito.when(accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccount.getId(), targetAccount.getId()))).thenReturn(mockAccounts);
 
         //Perform money transfer, insufficient balance exception should be thrown
-        assertThrows(InsufficientBalanceException.class, () -> transactionService.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN));
+        assertThrows(InsufficientBalanceException.class, () -> transactionServiceImpl.moneyTransfer(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN));
 
         //Verify that balances remain unchanged
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
@@ -80,7 +80,7 @@ public class ApplicationTests {
         Mockito.when(accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccount.getId(), sourceAccount.getId()))).thenReturn(mockAccounts);
 
         //Perform money transfer, same account exception should be thrown
-        assertThrows(SameAccountException.class, () -> transactionService.moneyTransfer(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE));
+        assertThrows(SameAccountException.class, () -> transactionServiceImpl.moneyTransfer(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE));
 
         //Verify the balance of source/target does not change
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
@@ -98,7 +98,7 @@ public class ApplicationTests {
         Mockito.when(accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccount.getId(), nonExistingAccountId))).thenReturn(Arrays.asList(sourceAccount));
 
         //Perform money transfer, non-existing account exception should be thrown
-        assertThrows(AccountNotFoundException.class, () -> transactionService.moneyTransfer(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));
+        assertThrows(AccountNotFoundException.class, () -> transactionServiceImpl.moneyTransfer(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));
 
         //Balance of existing amount does not change
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
