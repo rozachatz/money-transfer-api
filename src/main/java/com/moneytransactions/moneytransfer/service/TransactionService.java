@@ -29,7 +29,6 @@ public class TransactionService implements TransactionServiceInterface { //respo
 
     @Transactional // ACID
     public void moneyTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
-
         List<Account> accounts = validateTransfer(sourceAccountId, targetAccountId, amount);
 
         /* AC1: Happy path */
@@ -37,6 +36,7 @@ public class TransactionService implements TransactionServiceInterface { //respo
         Account targetAccount = accounts.get(1);
 
         Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, "EUR");
+
         targetAccount.credit(amount);
         sourceAccount.debit(amount);
 
@@ -46,8 +46,7 @@ public class TransactionService implements TransactionServiceInterface { //respo
     }
 
     public List<Account> validateTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
-
-        List<Account> accounts = accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccountId, targetAccountId));//findAllByIdAndLock(List.of(sourceAccountId, targetAccountId)); //data consistency
+        List<Account> accounts = accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccountId, targetAccountId));
 
         Account sourceAccount = accounts.stream()
                 .filter(account -> account.getId().equals(sourceAccountId))
@@ -65,7 +64,7 @@ public class TransactionService implements TransactionServiceInterface { //respo
         if (sourceAccount.getId().equals(targetAccount.getId())) {  /* AC3: Same Account */
             throw new SameAccountException("Transactions in the same account are not allowed.");
         }
-        return List.of(sourceAccount,targetAccount);
+        return List.of(sourceAccount, targetAccount);
 
     }
 

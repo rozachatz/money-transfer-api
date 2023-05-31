@@ -1,23 +1,17 @@
-import com.moneytransactions.moneytransfer.entity.Account;
-import com.moneytransactions.moneytransfer.entity.Transaction;
-import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
-import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceException;
-import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
-import com.moneytransactions.moneytransfer.repository.AccountRepository;
-import com.moneytransactions.moneytransfer.repository.TransactionRepository;
-import com.moneytransactions.moneytransfer.service.TransactionService;
+
+import com.moneytransactions.moneytransfer.repository.*;
+import com.moneytransactions.moneytransfer.entity.*;
+import com.moneytransactions.moneytransfer.service.*;
+import com.moneytransactions.moneytransfer.exceptions.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
