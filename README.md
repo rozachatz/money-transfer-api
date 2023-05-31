@@ -75,33 +75,32 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
 
 ## Architecture
 ### Presentation Layer:
-- **Controller**: Acts as an intermediary between the client (Curl) and the server (localhost:8080). It processes the requests, performs necessary operations, and returns the appropriate response to the client.
-- **Data Transfer Object (DTO)**: Container that represents the data transferred between the client and the server.
+- **Controller**: Exposes the API, which acts as an intermediary between the server and the client. It processes the requests and returns the appropriate response.
+- **Data Transfer Object (DTO)**: Container that represents the data that will be transferred between the client and the server.
 
 ### Service Layer:
-- Contains the business logic of the application.
-- Performs operations and processes data based on the requests received from the Presentation Layer.
+- Operates on the data transferred between the client and the server and performs operations according to the business logic of the application.
 
 ### Repository Layer:
-- Provides an interface to interact with the database.
-- Performs query and CRUD (Create, Read, Update, Delete) operations.
-- Saves and retrieves data from database. 
+- Provides access to the database by extending the JPARepository.
+- Performs custom queries (@Query) and CRUD (Create, Read, Update, Delete) operations, which are predefined methods like save(), findById(). 
 
 ### Entity Layer:
 - Represents the data model of the application.
 - Defines the structure and relationships between entities (tables) in the database.
 
 ### Exception Package:
-- Defines exception classes to handle different error scenarios.
+- Global API Exception Handler: uses @ControllerAdvice to handle all different exceptions of the application.
+- Uses hierarchy to define exception classes for handling different error scenarios.
 
 ## Testing
-The `ApplicationTests.java` file located in the `service` package at `src/test/java/service` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
+The `ApplicationTests.java` file located at `src/test/java` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
 
 The mock tests cover the following ACs:
 - AC 1: Happy path for money transfer between two accounts
 - AC 2: Insufficient balance to process money transfer
 - AC 3: Transfer between the same account
-- AC 4: One account (target/source) does not exist
+- AC 4: One or more of the accounts do not exist
 
 ## Future Containerization
 In future versions, a Docker container will be provided for easier installation and running of the application in different environments.
