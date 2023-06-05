@@ -1,5 +1,7 @@
 package com.moneytransactions.moneytransfer.service;
 
+import com.moneytransactions.moneytransfer.dto.AccountsDTO;
+import com.moneytransactions.moneytransfer.dto.TransferDTO;
 import com.moneytransactions.moneytransfer.entity.Account;
 import com.moneytransactions.moneytransfer.entity.Transaction;
 import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
@@ -12,8 +14,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,43 +30,44 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
     }
 
     @Transactional
-    public void moneyTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        List<Account> accounts = validateTransfer(sourceAccountId, targetAccountId, amount);
+    public TransferDTO transferFunds(Long sourceAccountId, Long targetAccountId, BigDecimal amount, String mode) throws MoneyTransferException {
+        AccountsDTO accountsDTO = getAccountsByIds(sourceAccountId, targetAccountId, mode);
 
-        /* AC1: Happy path */
-        Account sourceAccount = accounts.get(0);
-        Account targetAccount = accounts.get(1);
+        validateTransfer(accountsDTO, sourceAccountId, targetAccountId, amount);
+
+        Account sourceAccount = accountsDTO.getSourceAccount(), targetAccount = accountsDTO.getTargetAccount();
+
+        sourceAccount.debit(amount);
+        targetAccount.credit(amount);
 
         Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, "EUR");
-
-        targetAccount.credit(amount);
-        sourceAccount.debit(amount);
-
-        accountRepository.saveAll(accounts);
         transactionRepository.save(transaction);
+        return new TransferDTO(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
 
     }
 
-    public List<Account> validateTransfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        List<Account> accounts = accountRepository.findAllByIdAndLock(Arrays.asList(sourceAccountId, targetAccountId));
-
-        Account sourceAccount = accounts.stream()
-                .filter(account -> account.getId().equals(sourceAccountId))
-                .findFirst()
-                .orElseThrow(() -> new AccountNotFoundException("Source account not found."));
-
-        Account targetAccount = accounts.stream()
-                .filter(account -> account.getId().equals(targetAccountId))
-                .findFirst()
-                .orElseThrow(() -> new AccountNotFoundException("Target account not found."));
-
-        if (sourceAccount.getBalance().compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
-            throw new InsufficientBalanceException("Insufficient balance in the source account.");
+    public AccountsDTO getAccountsByIds(Long sourceAccountId, Long targetAccountId, String mode) throws AccountNotFoundException {
+        Optional<AccountsDTO> accountsDTO;
+        if (mode.equals("Pessimistic")) {
+            accountsDTO = accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId);
         }
-        if (sourceAccount.getId().equals(targetAccount.getId())) {  /* AC3: Same Account */
+        else {
+            accountsDTO = accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId);
+        }
+        return accountsDTO
+                .stream()
+                .findAny()
+                .orElseThrow(() -> new AccountNotFoundException("Source/target account not found"));
+    }
+
+    public void validateTransfer(AccountsDTO accounts, Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
+
+        if (sourceAccountId.equals(targetAccountId)) {  /* AC3: Same Account */
             throw new SameAccountException("Transactions in the same account are not allowed.");
         }
-        return List.of(sourceAccount, targetAccount);
+        if (accounts.getSourceAccount().getBalance().compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
+            throw new InsufficientBalanceException("Insufficient balance in the source account.");
+        }
 
     }
 

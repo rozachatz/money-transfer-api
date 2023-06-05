@@ -3,7 +3,7 @@ package com.moneytransactions.moneytransfer.controller;
 import com.moneytransactions.moneytransfer.dto.TransferDTO;
 import com.moneytransactions.moneytransfer.dto.TransferRequestDTO;
 import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
-import com.moneytransactions.moneytransfer.service.TransactionServiceImpl;
+import com.moneytransactions.moneytransfer.service.TransactionService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@ConditionalOnExpression("!${myapp.controller.enabled:true}")
-public class TransactionControllerImpl implements TransactionController {
-    private final TransactionServiceImpl transactionServiceImpl;
+@ConditionalOnExpression("${myapp.controller-with-interfaces.enabled:true}")
+public class TransactionControllerImplWithInterface implements TransactionController {
+    private final TransactionService transactionService;
 
-    public TransactionControllerImpl(TransactionServiceImpl transactionServiceImpl) { //default: singleton scope
-
-        this.transactionServiceImpl = transactionServiceImpl;
+    public TransactionControllerImplWithInterface(TransactionService transactionService) {
+        System.out.println("Interface implementation!");
+        this.transactionService = transactionService;
     }
 
     @PostMapping("/transactions/optimistic") //Endpoint
     public ResponseEntity<TransferDTO> createOptimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
-        return ResponseEntity.ok(transactionServiceImpl.transferFunds(
+        return ResponseEntity.ok(transactionService.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount(),
@@ -32,7 +32,7 @@ public class TransactionControllerImpl implements TransactionController {
 
     @PostMapping("/transactions/pessimistic") //Endpoint
     public ResponseEntity<TransferDTO> createPessimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
-        return ResponseEntity.ok(transactionServiceImpl.transferFunds(
+        return ResponseEntity.ok(transactionService.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount(),

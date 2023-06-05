@@ -1,12 +1,14 @@
 package com.moneytransactions.moneytransfer.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity //JPA entity: class mapped to a database table (accessed via JDBC driver)
 @Table(name = "transactions")
+@Getter
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID) // (atomically) generated in service (eliminate bottleneck)
@@ -15,9 +17,6 @@ public class Transaction {
     private BigDecimal amount; //amount to be transferred
     private String currency;
 
-    /*
-     * FOREIGN KEYS
-     */
     @ManyToOne()
     @JoinColumn(name = "source_account_id", referencedColumnName = "account_id")
     private Account sourceAccount;
@@ -37,7 +36,6 @@ public class Transaction {
     }
 
     private Transaction() {
-
     }
 
 }
