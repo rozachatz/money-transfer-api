@@ -1,8 +1,6 @@
 package com.moneytransactions.moneytransfer.exceptions;
 
 import com.moneytransactions.moneytransfer.dto.ErrorResponseDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -11,14 +9,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
 public class GlobalAPIExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalAPIExceptionHandler.class);
-
     @ExceptionHandler(InsufficientBalanceException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseStatus(HttpStatus.PAYMENT_REQUIRED)
     public ResponseEntity<ErrorResponseDTO> handleForbiddenRequestExceptions(Exception e) {
-        ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.FORBIDDEN.value(), e.getMessage());
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.PAYMENT_REQUIRED.value(), e.getMessage());
         return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
+                .status(HttpStatus.PAYMENT_REQUIRED)
                 .body(errorResponse);
     }
 
@@ -39,6 +35,4 @@ public class GlobalAPIExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(errorResponse);
     }
-
-
 }

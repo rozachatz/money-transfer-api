@@ -1,13 +1,10 @@
 package service;
 
 import com.moneytransactions.moneytransfer.dto.AccountsDTO;
-import com.moneytransactions.moneytransfer.dto.TransferDTO;
-import com.moneytransactions.moneytransfer.dto.TransferRequestDTO;
 import com.moneytransactions.moneytransfer.entity.Account;
 import com.moneytransactions.moneytransfer.entity.Transaction;
 import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
 import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceException;
-import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
 import com.moneytransactions.moneytransfer.repository.AccountRepository;
 import com.moneytransactions.moneytransfer.repository.TransactionRepository;
@@ -20,19 +17,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
-import org.springframework.test.context.testng.AbstractTransactionalTestNGSpringContextTests;
-import org.testng.annotations.DataProvider;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MockitoSettings
-public class TransactionServiceImplTest extends AbstractTransactionalTestNGSpringContextTests {
+public class TransactionServiceImplTest {
     @Mock
     private AccountRepository accountRepository;
     @Mock
@@ -46,9 +40,10 @@ public class TransactionServiceImplTest extends AbstractTransactionalTestNGSprin
         sourceAccount = new Account(BigDecimal.ONE, "EUR", LocalDateTime.now());
         sourceAccount.setId(1L);
     }
+
     @Test
-    public void testHappyTransfer_Successful() {
-        Account targetAccount = new Account(BigDecimal.ZERO, "EUR",LocalDateTime.now());
+    public void testHappyPath() {
+        Account targetAccount = new Account(BigDecimal.ZERO, "EUR", LocalDateTime.now());
         targetAccount.setId(2L);
 
         AccountsDTO accountsDTO = Mockito.mock(AccountsDTO.class);
@@ -58,7 +53,7 @@ public class TransactionServiceImplTest extends AbstractTransactionalTestNGSprin
                 .thenReturn(Optional.of(accountsDTO));
 
         Assertions.assertDoesNotThrow(() ->
-              transactionServiceImpl.transferFunds(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE,"Pessimistic")
+                transactionServiceImpl.transferFunds(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE, "Pessimistic")
         );
         assertEquals(BigDecimal.ZERO, sourceAccount.getBalance());
         assertEquals(BigDecimal.ONE, targetAccount.getBalance());
@@ -67,7 +62,7 @@ public class TransactionServiceImplTest extends AbstractTransactionalTestNGSprin
 
     @Test
     public void testInsufficientBalance() {
-        Account targetAccount = new Account(BigDecimal.ZERO, "EUR",LocalDateTime.now());
+        Account targetAccount = new Account(BigDecimal.ZERO, "EUR", LocalDateTime.now());
         targetAccount.setId(2L);
 
         AccountsDTO accountsDTO = Mockito.mock(AccountsDTO.class);
@@ -76,7 +71,7 @@ public class TransactionServiceImplTest extends AbstractTransactionalTestNGSprin
                 .thenReturn(Optional.of(accountsDTO));
 
         assertThrows(InsufficientBalanceException.class, () ->
-                transactionServiceImpl.transferFunds(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN,"Pessimistic")
+                transactionServiceImpl.transferFunds(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN, "Pessimistic")
         );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         assertEquals(BigDecimal.ZERO, targetAccount.getBalance());
@@ -90,7 +85,7 @@ public class TransactionServiceImplTest extends AbstractTransactionalTestNGSprin
                 .thenReturn(Optional.of(accountsDTO));
 
         assertThrows(SameAccountException.class, () ->
-                transactionServiceImpl.transferFunds(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE,"Pessimistic")
+                transactionServiceImpl.transferFunds(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE, "Pessimistic")
         );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
@@ -103,7 +98,7 @@ public class TransactionServiceImplTest extends AbstractTransactionalTestNGSprin
         Mockito.when(accountRepository.findByIdAndLockPessimistic(sourceAccount.getId(), nonExistingAccountId))
                 .thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFoundException.class, () -> transactionServiceImpl.transferFunds(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE,"Pessimistic"));
+        assertThrows(AccountNotFoundException.class, () -> transactionServiceImpl.transferFunds(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE, "Pessimistic"));
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
     }

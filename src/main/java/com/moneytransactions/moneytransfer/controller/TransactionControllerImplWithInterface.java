@@ -5,6 +5,7 @@ import com.moneytransactions.moneytransfer.dto.TransferRequestDTO;
 import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransactions.moneytransfer.service.TransactionService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,31 +17,31 @@ public class TransactionControllerImplWithInterface implements TransactionContro
     private final TransactionService transactionService;
 
     public TransactionControllerImplWithInterface(TransactionService transactionService) {
-        System.out.println("Interface implementation!");
         this.transactionService = transactionService;
     }
 
-    @PostMapping("/transactions/optimistic") //Endpoint
+    @PostMapping("/transaction/optimistic")
     public ResponseEntity<TransferDTO> createOptimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
-        return ResponseEntity.ok(transactionService.transferFunds(
+        TransferDTO createdtransferDTO = transactionService.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount(),
-                "Optimistic"
-        ));
+                "Optimistic");
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(createdtransferDTO);
     }
 
-    @PostMapping("/transactions/pessimistic") //Endpoint
+    @PostMapping("/transaction/pessimistic")
     public ResponseEntity<TransferDTO> createPessimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
-        return ResponseEntity.ok(transactionService.transferFunds(
+        TransferDTO createdtransferDTO = transactionService.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount(),
-                "Pessimistic"
-        ));
+                "Pessimistic");
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(createdtransferDTO);
     }
 
 }
-
-
-//curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/transferMoney"

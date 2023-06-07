@@ -22,8 +22,6 @@ public class TransferDTO {
     @JsonProperty("message")
     private String message;
 
-    // Constructors, getters, and setters
-
     public TransferDTO(UUID transactionId, Long sourceAccountId, Long targetAccountId, BigDecimal amount, LocalDateTime transferDateTime, String message) {
         this.transactionId = transactionId;
         this.sourceAccountId = sourceAccountId;

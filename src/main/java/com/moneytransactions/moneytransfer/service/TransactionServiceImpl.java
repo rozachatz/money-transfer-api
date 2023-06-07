@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,6 +41,8 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
         sourceAccount.debit(amount);
         targetAccount.credit(amount);
 
+        accountRepository.saveAll(List.of(sourceAccount, targetAccount));
+
         Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, "EUR");
         transactionRepository.save(transaction);
         return new TransferDTO(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
@@ -50,8 +53,7 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
         Optional<AccountsDTO> accountsDTO;
         if (mode.equals("Pessimistic")) {
             accountsDTO = accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId);
-        }
-        else {
+        } else {
             accountsDTO = accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId);
         }
         return accountsDTO
