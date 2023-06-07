@@ -20,8 +20,8 @@ public class TransactionControllerImpl implements TransactionController {
         this.transactionServiceImpl = transactionServiceImpl;
     }
 
-    @PostMapping("/transaction/optimistic")
-    public ResponseEntity<TransferDTO> createOptimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
+    @PostMapping("/transfer/optimistic")
+    public ResponseEntity<TransferDTO> createOptimisticTransfer(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
         TransferDTO createdtransferDTO = transactionServiceImpl.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
@@ -31,8 +31,8 @@ public class TransactionControllerImpl implements TransactionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdtransferDTO);
     }
 
-    @PostMapping("/transaction/pessimistic")
-    public ResponseEntity<TransferDTO> createPessimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
+    @PostMapping("/transfer/pessimistic")
+    public ResponseEntity<TransferDTO> createPessimisticTransfer(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
         TransferDTO createdtransferDTO = transactionServiceImpl.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),

@@ -20,8 +20,8 @@ public class TransactionControllerImplWithInterface implements TransactionContro
         this.transactionService = transactionService;
     }
 
-    @PostMapping("/transaction/optimistic")
-    public ResponseEntity<TransferDTO> createOptimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
+    @PostMapping("/transfer/optimistic")
+    public ResponseEntity<TransferDTO> createOptimisticTransfer(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
         TransferDTO createdtransferDTO = transactionService.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
@@ -32,8 +32,8 @@ public class TransactionControllerImplWithInterface implements TransactionContro
                 .body(createdtransferDTO);
     }
 
-    @PostMapping("/transaction/pessimistic")
-    public ResponseEntity<TransferDTO> createPessimisticTransaction(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
+    @PostMapping("/transfer/pessimistic")
+    public ResponseEntity<TransferDTO> createPessimisticTransfer(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
         TransferDTO createdtransferDTO = transactionService.transferFunds(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),

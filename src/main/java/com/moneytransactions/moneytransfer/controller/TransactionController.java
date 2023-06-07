@@ -6,9 +6,6 @@ import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
 import org.springframework.http.ResponseEntity;
 
 public interface TransactionController {
-    ResponseEntity<TransferDTO> createOptimisticTransaction(TransferRequestDTO transferRequestDTO) throws MoneyTransferException;
-
-    ResponseEntity<TransferDTO> createPessimisticTransaction(TransferRequestDTO transferRequestDTO) throws MoneyTransferException;
-
-
+    ResponseEntity<TransferDTO> createOptimisticTransfer(TransferRequestDTO transferRequestDTO) throws MoneyTransferException;
+    ResponseEntity<TransferDTO> createPessimisticTransfer(TransferRequestDTO transferRequestDTO) throws MoneyTransferException;
 }

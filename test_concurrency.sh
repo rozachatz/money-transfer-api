@@ -1,7 +1,7 @@
 #!/bin/bash
 
-URL1="http://localhost:8080/transaction/optimistic"
-URL2="http://localhost:8080/transaction/pessimistic"
+URL1="http://localhost:8080/transfer/optimistic"
+URL2="http://localhost:8080/transfer/pessimistic"
 
 executeRequest() {
     local url=$1
@@ -13,9 +13,9 @@ executeRequest() {
     fi
 }
 
-echo "Performing 200 concurrent conflicting requests using Optimistic and Pessimistic locking..."
+echo "Performing 200 concurrent conflicting transfer requests using Optimistic and Pessimistic locking..."
 echo " "
-echo "Note: internal server errors (if any) will be printed in this terminal window."
+echo "Note: messages for internal server error will be printed in this terminal window."
 sourceAccountId=1
 targetAccountId=2
 echo "----------------------------------"
