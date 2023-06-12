@@ -23,15 +23,13 @@ public class Transaction {
     @ManyToOne()
     @JoinColumn(name = "source_account_id", referencedColumnName = "account_id")
     private Account sourceAccount;
+
     @ManyToOne()
     @JoinColumn(name = "target_account_id", referencedColumnName = "account_id")
     private Account targetAccount;
 
-
     private BigDecimal amount;
+
     @Enumerated(EnumType.STRING)
     private Currency currency;
-
-
-
 }

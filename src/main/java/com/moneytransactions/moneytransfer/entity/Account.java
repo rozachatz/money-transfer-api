@@ -10,7 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity //JPA entity
+@Entity
 @Table(name = "accounts")
 @Getter
 @Setter
@@ -22,9 +22,8 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "account_id")
-    private Long id; // PRIMARY KEY
+    private Long id;
     private BigDecimal balance;
-
     @Enumerated(EnumType.STRING)
     private Currency currency;
     private LocalDateTime createdAt;

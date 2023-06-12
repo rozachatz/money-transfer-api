@@ -38,12 +38,12 @@ public class TransactionServiceImplTest {
 
     @BeforeEach
     public void setup() {
-        sourceAccount = new Account(0,1L, BigDecimal.ONE, Currency.EUR, LocalDateTime.now() );
+        sourceAccount = new Account(1L, BigDecimal.ONE, Currency.EUR, LocalDateTime.now(), 0 );
     }
 
     @Test
     public void testHappyPath() {
-        Account targetAccount = new Account(0,2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now() );
+        Account targetAccount = new Account(2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now(), 0 );
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
@@ -52,7 +52,7 @@ public class TransactionServiceImplTest {
                 .thenReturn(Optional.of(transferAccountsDto));
 
         Assertions.assertDoesNotThrow(() ->
-                transactionServiceImpl.transferFundsPessimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE)
+                transactionServiceImpl.transferPessimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE)
         );
         assertEquals(BigDecimal.ZERO, sourceAccount.getBalance());
         assertEquals(BigDecimal.ONE, targetAccount.getBalance());
@@ -61,7 +61,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testInsufficientBalance() {
-        Account targetAccount = new Account(0,2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now() );
+        Account targetAccount = new Account(2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now(), 0 );
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
@@ -69,7 +69,7 @@ public class TransactionServiceImplTest {
                 .thenReturn(Optional.of(transferAccountsDto));
 
         assertThrows(InsufficientBalanceException.class, () ->
-                transactionServiceImpl.transferFundsPessimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN)
+                transactionServiceImpl.transferPessimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN)
         );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         assertEquals(BigDecimal.ZERO, targetAccount.getBalance());
@@ -83,7 +83,7 @@ public class TransactionServiceImplTest {
                 .thenReturn(Optional.of(transferAccountsDto));
 
         assertThrows(SameAccountException.class, () ->
-                transactionServiceImpl.transferFundsPessimistic(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE)
+                transactionServiceImpl.transferPessimistic(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE)
         );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
@@ -95,7 +95,7 @@ public class TransactionServiceImplTest {
         Mockito.when(accountRepository.findByIdAndLockPessimistic(sourceAccount.getId(), nonExistingAccountId))
                 .thenReturn(Optional.empty());
 
-        assertThrows(AccountNotFoundException.class, () -> transactionServiceImpl.transferFundsPessimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));
+        assertThrows(AccountNotFoundException.class, () -> transactionServiceImpl.transferPessimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
     }

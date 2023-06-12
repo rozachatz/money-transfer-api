@@ -16,12 +16,15 @@ public class GlobalAPIExceptionHandler {
                 .status(status)
                 .body(errorResponse);
     }
+
     private HttpStatus determineHttpStatus(MoneyTransferException e) {
         if (e instanceof InsufficientBalanceException) {
             return HttpStatus.PAYMENT_REQUIRED;
         } else if (e instanceof SameAccountException) {
             return HttpStatus.BAD_REQUEST;
         } else if (e instanceof AccountNotFoundException) {
+            return HttpStatus.NOT_FOUND;
+        } else if (e instanceof TransactionNotFoundException) {
             return HttpStatus.NOT_FOUND;
         }
         return HttpStatus.INTERNAL_SERVER_ERROR;
