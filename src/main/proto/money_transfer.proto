@@ -1,15 +1,11 @@
 syntax = "proto3";
-package com.moneytransactions.moneytransfer;
-
-// TransferRequest message
 message TransferRequest {
   int64 sourceAccountId = 1;
   int64 targetAccountId = 2;
   double amount = 3;
 }
 
-// TransferResponse message
-message TransferResponse {
+message Transaction {
   string transactionId = 1;
   int64 sourceAccountId = 2;
   int64 targetAccountId = 3;
@@ -22,8 +18,7 @@ message TransferResponse {
 enum Currency {
 EUR = 0;
 }
-// Service definition for the money transfer service
 service TransactionService {
-  rpc transferFundsOptimistic(TransferRequest) returns (TransferResponse);
-  rpc transferFundsPessimistic(TransferRequest) returns (TransferResponse);
+  rpc transferFundsOptimistic(TransferRequest) returns (Transaction);
+  rpc transferFundsPessimistic(TransferRequest) returns (Transaction);
 }

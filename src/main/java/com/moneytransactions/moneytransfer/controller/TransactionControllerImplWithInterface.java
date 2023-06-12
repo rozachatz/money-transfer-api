@@ -1,8 +1,8 @@
 package com.moneytransactions.moneytransfer.controller;
 
-import com.moneytransactions.moneytransfer.domain.TransferResult;
 import com.moneytransactions.moneytransfer.dto.GetTransferDto;
 import com.moneytransactions.moneytransfer.dto.TransferRequestDto;
+import com.moneytransactions.moneytransfer.entity.Transaction;
 import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransactions.moneytransfer.service.TransactionService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -23,7 +23,7 @@ public class TransactionControllerImplWithInterface implements TransactionContro
 
     @PostMapping("/transfer/optimistic")
     public ResponseEntity<GetTransferDto> createOptimisticTransfer(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
-        TransferResult transferResult = transactionService.transferFundsPessimistic(
+        Transaction transaction = transactionService.transferFundsOptimistic(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount());
@@ -31,17 +31,15 @@ public class TransactionControllerImplWithInterface implements TransactionContro
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
-                        transferResult.getTransactionId(),
-                        transferResult.getSourceAccountId(),
-                        transferResult.getTargetAccountId(),
-                        transferResult.getAmount(),
-                        transferResult.getTransferDateTime(),
-                        transferResult.getMessage()));
+                        transaction.getId(),
+                        transaction.getSourceAccount().getId(),
+                        transaction.getTargetAccount().getId(),
+                        transaction.getAmount()));
     }
 
     @PostMapping("/transfer/pessimistic")
     public ResponseEntity<GetTransferDto> createPessimisticTransfer(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
-        TransferResult transferResult = transactionService.transferFundsPessimistic(
+        Transaction transaction = transactionService.transferFundsPessimistic(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount());
@@ -49,12 +47,10 @@ public class TransactionControllerImplWithInterface implements TransactionContro
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
-                        transferResult.getTransactionId(),
-                        transferResult.getSourceAccountId(),
-                        transferResult.getTargetAccountId(),
-                        transferResult.getAmount(),
-                        transferResult.getTransferDateTime(),
-                        transferResult.getMessage()));
+                        transaction.getId(),
+                        transaction.getSourceAccount().getId(),
+                        transaction.getTargetAccount().getId(),
+                        transaction.getAmount()));
     }
 
 }

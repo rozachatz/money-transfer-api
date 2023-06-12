@@ -1,6 +1,5 @@
 package com.moneytransactions.moneytransfer.service;
 
-import com.moneytransactions.moneytransfer.domain.TransferResult;
 import com.moneytransactions.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransactions.moneytransfer.entity.Account;
 import com.moneytransactions.moneytransfer.entity.Transaction;
@@ -35,7 +34,7 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
     }
 
     @Transactional
-    public TransferResult transferFundsPessimistic(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    public Transaction transferFundsPessimistic(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
 
         validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
@@ -49,12 +48,12 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
 
         Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, Currency.EUR);
         transactionRepository.save(transaction);
-        return new TransferResult(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
+        return transaction;
 
     }
 
     @Transactional
-    public TransferResult transferFundsOptimistic(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    public Transaction transferFundsOptimistic(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
 
         validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
@@ -68,8 +67,7 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
 
         Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, Currency.EUR);
         transactionRepository.save(transaction);
-        return new TransferResult(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
-
+        return transaction;
     }
 
 

@@ -15,8 +15,6 @@ public class GetTransferDto {
     private Long sourceAccountId;
     private Long targetAccountId;
     private BigDecimal amount;
-    private LocalDateTime transferDateTime;
-    private String message;
 }
 
 
