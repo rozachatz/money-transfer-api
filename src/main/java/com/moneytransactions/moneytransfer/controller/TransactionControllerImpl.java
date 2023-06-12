@@ -1,7 +1,8 @@
 package com.moneytransactions.moneytransfer.controller;
 
-import com.moneytransactions.moneytransfer.dto.TransferDTO;
-import com.moneytransactions.moneytransfer.dto.TransferRequestDTO;
+import com.moneytransactions.moneytransfer.domain.TransferResult;
+import com.moneytransactions.moneytransfer.dto.GetTransferDto;
+import com.moneytransactions.moneytransfer.dto.TransferRequestDto;
 import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransactions.moneytransfer.service.TransactionServiceImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -21,25 +22,39 @@ public class TransactionControllerImpl implements TransactionController {
     }
 
     @PostMapping("/transfer/optimistic")
-    public ResponseEntity<TransferDTO> createOptimisticTransfer(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
-        TransferDTO createdtransferDTO = transactionServiceImpl.transferFunds(
+    public ResponseEntity<GetTransferDto> createOptimisticTransfer(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
+        TransferResult transferResult = transactionServiceImpl.transferFundsPessimistic(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
-                transferRequestDTO.amount(),
-                "Optimistic");
+                transferRequestDTO.amount());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdtransferDTO);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new GetTransferDto(
+                        transferResult.getTransactionId(),
+                        transferResult.getSourceAccountId(),
+                        transferResult.getTargetAccountId(),
+                        transferResult.getAmount(),
+                        transferResult.getTransferDateTime(),
+                        transferResult.getMessage()));
     }
 
     @PostMapping("/transfer/pessimistic")
-    public ResponseEntity<TransferDTO> createPessimisticTransfer(@RequestBody TransferRequestDTO transferRequestDTO) throws MoneyTransferException {
-        TransferDTO createdtransferDTO = transactionServiceImpl.transferFunds(
+    public ResponseEntity<GetTransferDto> createPessimisticTransfer(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
+        TransferResult transferResult = transactionServiceImpl.transferFundsPessimistic(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
-                transferRequestDTO.amount(),
-                "Pessimistic");
+                transferRequestDTO.amount());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdtransferDTO);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new GetTransferDto(
+                        transferResult.getTransactionId(),
+                        transferResult.getSourceAccountId(),
+                        transferResult.getTargetAccountId(),
+                        transferResult.getAmount(),
+                        transferResult.getTransferDateTime(),
+                        transferResult.getMessage()));
     }
 
 }

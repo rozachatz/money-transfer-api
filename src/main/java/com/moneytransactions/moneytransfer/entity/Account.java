@@ -1,7 +1,10 @@
 package com.moneytransactions.moneytransfer.entity;
 
+import com.moneytransactions.moneytransfer.enums.Currency;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -11,6 +14,8 @@ import java.time.LocalDateTime;
 @Table(name = "accounts")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Account {
     @Version //optimistic
     protected int version;
@@ -19,17 +24,10 @@ public class Account {
     @Column(name = "account_id")
     private Long id; // PRIMARY KEY
     private BigDecimal balance;
-    private String currency; // TODO: Enum for different currencies
+
+    @Enumerated(EnumType.STRING)
+    private Currency currency;
     private LocalDateTime createdAt;
-
-    public Account(BigDecimal balance, String currency, LocalDateTime createdAt) {
-        this.balance = balance;
-        this.currency = currency;
-        this.createdAt = LocalDateTime.now();
-    }
-
-    private Account() {
-    }
 
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);

@@ -1,38 +1,29 @@
 package com.moneytransactions.moneytransfer.exceptions;
 
-import com.moneytransactions.moneytransfer.dto.ErrorResponseDTO;
+import com.moneytransactions.moneytransfer.dto.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
 public class GlobalAPIExceptionHandler {
-    @ExceptionHandler(InsufficientBalanceException.class)
-    @ResponseStatus(HttpStatus.PAYMENT_REQUIRED)
-    public ResponseEntity<ErrorResponseDTO> handleForbiddenRequestExceptions(Exception e) {
-        ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.PAYMENT_REQUIRED.value(), e.getMessage());
+    @ExceptionHandler(MoneyTransferException.class)
+    public ResponseEntity<ErrorResponseDto> handleMoneyExceptions(MoneyTransferException e) {
+        HttpStatus status = determineHttpStatus(e);
+        ErrorResponseDto errorResponse = new ErrorResponseDto(status.value(), e.getMessage());
         return ResponseEntity
-                .status(HttpStatus.PAYMENT_REQUIRED)
+                .status(status)
                 .body(errorResponse);
     }
-
-    @ExceptionHandler(SameAccountException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponseDTO> handleBadRequestExceptions(Exception e) {
-        ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.BAD_REQUEST.value(), e.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(errorResponse);
-    }
-
-    @ExceptionHandler(AccountNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ErrorResponseDTO> handleNotFoundExceptions(AccountNotFoundException e) {
-        ErrorResponseDTO errorResponse = new ErrorResponseDTO(HttpStatus.NOT_FOUND.value(), e.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(errorResponse);
+    private HttpStatus determineHttpStatus(MoneyTransferException e) {
+        if (e instanceof InsufficientBalanceException) {
+            return HttpStatus.PAYMENT_REQUIRED;
+        } else if (e instanceof SameAccountException) {
+            return HttpStatus.BAD_REQUEST;
+        } else if (e instanceof AccountNotFoundException) {
+            return HttpStatus.NOT_FOUND;
+        }
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

@@ -1,9 +1,10 @@
 package com.moneytransactions.moneytransfer.service;
 
-import com.moneytransactions.moneytransfer.dto.AccountsDTO;
-import com.moneytransactions.moneytransfer.dto.TransferDTO;
+import com.moneytransactions.moneytransfer.domain.TransferResult;
+import com.moneytransactions.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransactions.moneytransfer.entity.Account;
 import com.moneytransactions.moneytransfer.entity.Transaction;
+import com.moneytransactions.moneytransfer.enums.Currency;
 import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
 import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransactions.moneytransfer.exceptions.MoneyTransferException;
@@ -11,12 +12,14 @@ import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
 import com.moneytransactions.moneytransfer.repository.AccountRepository;
 import com.moneytransactions.moneytransfer.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.sql.Struct;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -24,6 +27,7 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private static final Logger logger = LogManager.getLogger(TransactionServiceImpl.class);
 
     public TransactionServiceImpl(AccountRepository accountRepository, TransactionRepository transactionRepository) {
         this.accountRepository = accountRepository;
@@ -31,44 +35,78 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
     }
 
     @Transactional
-    public TransferDTO transferFunds(Long sourceAccountId, Long targetAccountId, BigDecimal amount, String mode) throws MoneyTransferException {
-        AccountsDTO accountsDTO = getAccountsByIds(sourceAccountId, targetAccountId, mode);
+    public TransferResult transferFundsPessimistic(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
 
-        validateTransfer(accountsDTO, sourceAccountId, targetAccountId, amount);
+        validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
 
-        Account sourceAccount = accountsDTO.getSourceAccount(), targetAccount = accountsDTO.getTargetAccount();
+        Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
 
         sourceAccount.debit(amount);
         targetAccount.credit(amount);
 
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
 
-        Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, "EUR");
+        Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, Currency.EUR);
         transactionRepository.save(transaction);
-        return new TransferDTO(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
+        return new TransferResult(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
 
     }
 
-    public AccountsDTO getAccountsByIds(Long sourceAccountId, Long targetAccountId, String mode) throws AccountNotFoundException {
-        Optional<AccountsDTO> accountsDTO;
-        if (mode.equals("Pessimistic")) {
-            accountsDTO = accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId);
-        } else {
-            accountsDTO = accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId);
-        }
-        return accountsDTO
+    @Transactional
+    public TransferResult transferFundsOptimistic(Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
+
+        validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
+
+        Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
+
+        sourceAccount.debit(amount);
+        targetAccount.credit(amount);
+
+        accountRepository.saveAll(List.of(sourceAccount, targetAccount));
+
+        Transaction transaction = new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, Currency.EUR);
+        transactionRepository.save(transaction);
+        return new TransferResult(transaction.getId(), sourceAccountId, targetAccountId, amount, LocalDateTime.now(), "Money transferred successfully.");
+
+    }
+
+
+    public TransferAccountsDto getAccountsByIdsPessimistic(Long sourceAccountId, Long targetAccountId) throws AccountNotFoundException {
+        return accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId)
                 .stream()
                 .findAny()
-                .orElseThrow(() -> new AccountNotFoundException("Source/target account not found"));
+                .orElseThrow(() -> {
+                    String errorMessage = "Source/target account not found. ";
+                    logger.error(errorMessage+"Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId);
+                    return new AccountNotFoundException(errorMessage);
+                });
     }
 
-    public void validateTransfer(AccountsDTO accounts, Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    public TransferAccountsDto getAccountsByIdsOptimistic(Long sourceAccountId, Long targetAccountId) throws AccountNotFoundException {
+        return accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId)
+                                .stream()
+                                .findAny()
+                                .orElseThrow(() -> {
+                                    String errorMessage = "Source/target account not found. ";
+                                    logger.error(errorMessage+"Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId);
+                                    return new AccountNotFoundException(errorMessage);
+                                });
+    }
+
+    private void validateTransfer(TransferAccountsDto accounts, Long sourceAccountId, Long targetAccountId, BigDecimal amount) throws MoneyTransferException {
 
         if (sourceAccountId.equals(targetAccountId)) {  /* AC3: Same Account */
-            throw new SameAccountException("Transactions in the same account are not allowed.");
+            String errorMessage = "Transfer in the same account is not allowed.. ";
+            logger.error(errorMessage+"Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId);
+            throw new SameAccountException(errorMessage);
         }
-        if (accounts.getSourceAccount().getBalance().compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
-            throw new InsufficientBalanceException("Insufficient balance in the source account.");
+        BigDecimal balance = accounts.getSourceAccount().getBalance();
+        if (balance.compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
+            String errorMessage = "Insufficient balance in the source account. ";
+            logger.error(errorMessage+" Account ID: " + sourceAccountId + ", Requested Amount: " + amount + ", Available Balance: " + balance);
+            throw new InsufficientBalanceException(errorMessage);
         }
 
     }
