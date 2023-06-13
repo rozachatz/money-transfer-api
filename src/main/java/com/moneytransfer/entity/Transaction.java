@@ -1,6 +1,6 @@
-package com.moneytransactions.moneytransfer.entity;
+package com.moneytransfer.entity;
 
-import com.moneytransactions.moneytransfer.enums.Currency;
+import com.moneytransfer.enums.Currency;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

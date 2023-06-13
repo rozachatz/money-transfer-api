@@ -1,4 +1,4 @@
-package com.moneytransactions.moneytransfer.exceptions;
+package com.moneytransfer.exceptions;
 
 public class AccountNotFoundException extends MoneyTransferException {
 

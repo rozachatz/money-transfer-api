@@ -1,7 +1,7 @@
 #!/bin/bash
 
-URL1="http://localhost:8080/transfer/optimistic"
-URL2="http://localhost:8080/transfer/pessimistic"
+URL1="http://localhost:8080/api/transfer/optimistic"
+URL2="http://localhost:8080/api/transfer/pessimistic"
 
 executeRequest() {
     local url=$1

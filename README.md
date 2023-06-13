@@ -33,11 +33,16 @@ This project is a simple microservice that handles financial transactions betwee
 You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
 
 ````bash
-curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
+curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/api/transfer/pessimistic"
 ````
-
-This curl command is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
-
+````bash
+curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/api/transfer/optimistic"
+````
+Each of these curl commands is used to initiate a transfer of 30.00 EUR (default currency) from account with ID 1 to account with ID 2 with optimistic ("/api/transfer/optimistic") pessimistic ("/api/transfer/pessimistic") locking.
+````bash
+curl -X GET -H "Content-Type: application/json"  "http://localhost:8080/api/transfer/{transactionId}"
+````
+The endpoint "\api\transfer\{transactionId}" retrieves the details of the transfer with transaction id equal to {transactionId}.
 ## Database
 ### Data Model
 In this section, you will find an overview of the entities (or tables) used in the application's data model.

@@ -1,15 +1,15 @@
 package service;
 
-import com.moneytransactions.moneytransfer.dto.TransferAccountsDto;
-import com.moneytransactions.moneytransfer.entity.Account;
-import com.moneytransactions.moneytransfer.entity.Transaction;
-import com.moneytransactions.moneytransfer.enums.Currency;
-import com.moneytransactions.moneytransfer.exceptions.AccountNotFoundException;
-import com.moneytransactions.moneytransfer.exceptions.InsufficientBalanceException;
-import com.moneytransactions.moneytransfer.exceptions.SameAccountException;
-import com.moneytransactions.moneytransfer.repository.AccountRepository;
-import com.moneytransactions.moneytransfer.repository.TransactionRepository;
-import com.moneytransactions.moneytransfer.service.TransactionServiceImpl;
+import com.moneytransfer.dto.TransferAccountsDto;
+import com.moneytransfer.entity.Account;
+import com.moneytransfer.entity.Transaction;
+import com.moneytransfer.enums.Currency;
+import com.moneytransfer.exceptions.AccountNotFoundException;
+import com.moneytransfer.exceptions.InsufficientBalanceException;
+import com.moneytransfer.exceptions.SameAccountException;
+import com.moneytransfer.repository.AccountRepository;
+import com.moneytransfer.repository.TransactionRepository;
+import com.moneytransfer.service.TransactionServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,12 +38,12 @@ public class TransactionServiceImplTest {
 
     @BeforeEach
     public void setup() {
-        sourceAccount = new Account(1L, BigDecimal.ONE, Currency.EUR, LocalDateTime.now(), 0 );
+        sourceAccount = new Account(0,1L, BigDecimal.ONE, Currency.EUR, LocalDateTime.now() );
     }
 
     @Test
     public void testHappyPath() {
-        Account targetAccount = new Account(2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now(), 0 );
+        Account targetAccount = new Account(0,2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now() );
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
@@ -61,7 +61,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testInsufficientBalance() {
-        Account targetAccount = new Account(2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now(), 0 );
+        Account targetAccount = new Account(0,2L, BigDecimal.ZERO, Currency.EUR, LocalDateTime.now() );
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);

@@ -1,4 +1,4 @@
-package com.moneytransactions.moneytransfer.exceptions;
+package com.moneytransfer.exceptions;
 
 public class TransactionNotFoundException extends MoneyTransferException {
     public TransactionNotFoundException(String message) {

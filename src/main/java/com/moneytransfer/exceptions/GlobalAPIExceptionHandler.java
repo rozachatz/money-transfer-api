@@ -1,6 +1,6 @@
-package com.moneytransactions.moneytransfer.exceptions;
+package com.moneytransfer.exceptions;
 
-import com.moneytransactions.moneytransfer.dto.ErrorResponseDto;
+import com.moneytransfer.dto.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

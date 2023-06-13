@@ -1,7 +1,7 @@
-package com.moneytransactions.moneytransfer.repository;
+package com.moneytransfer.repository;
 
-import com.moneytransactions.moneytransfer.dto.TransferAccountsDto;
-import com.moneytransactions.moneytransfer.entity.Account;
+import com.moneytransfer.dto.TransferAccountsDto;
+import com.moneytransfer.entity.Account;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
