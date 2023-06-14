@@ -10,8 +10,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class GetTransferDto {
     private UUID transactionId;
-    private Long sourceAccountId;
-    private Long targetAccountId;
+    private UUID sourceAccountId;
+    private UUID targetAccountId;
     private BigDecimal amount;
 }
 

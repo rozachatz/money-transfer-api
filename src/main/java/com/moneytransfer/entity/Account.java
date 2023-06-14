@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
@@ -20,9 +21,8 @@ public class Account {
     @Version //optimistic
     protected int version;
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "account_id")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
     private Currency currency;
@@ -31,7 +31,6 @@ public class Account {
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
     }
-
     public void debit(BigDecimal amount) {
         this.balance = balance.subtract(amount);
     }

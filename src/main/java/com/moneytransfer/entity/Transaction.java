@@ -17,15 +17,14 @@ import java.util.UUID;
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "transaction_id")
     private UUID id;
 
     @ManyToOne()
-    @JoinColumn(name = "source_account_id", referencedColumnName = "account_id")
+    @JoinColumn(name = "source_account_id", referencedColumnName = "id")
     private Account sourceAccount;
 
     @ManyToOne()
-    @JoinColumn(name = "target_account_id", referencedColumnName = "account_id")
+    @JoinColumn(name = "target_account_id", referencedColumnName = "id")
     private Account targetAccount;
 
     private BigDecimal amount;

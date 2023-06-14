@@ -16,8 +16,8 @@ executeRequest() {
 echo "Performing 200 concurrent conflicting transfer requests using Optimistic and Pessimistic locking..."
 echo " "
 echo "Note: messages for internal server error will be printed in this terminal window."
-sourceAccountId=1
-targetAccountId=2
+sourceAccountId="36e977ac-2499-4eea-b853-afefc143c055"
+targetAccountId="5ff04dbf-93e1-498a-b1fe-d613c6ce6d78"
 echo "----------------------------------"
 echo "Optimistic Locking"
 start_time=$(date +%s.%N)
