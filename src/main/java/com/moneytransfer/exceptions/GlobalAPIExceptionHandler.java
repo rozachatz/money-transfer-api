@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalAPIExceptionHandler {
     private static final Logger logger = LogManager.getLogger(TransactionServiceImpl.class);
+
     @ExceptionHandler(MoneyTransferException.class)
     public ResponseEntity<ErrorResponseDto> handleMoneyExceptions(MoneyTransferException e) {
+        logger.error(e.getMessage(), e);
         HttpStatus status = determineHttpStatus(e);
-        logger.error(e.getMessage());
         ErrorResponseDto errorResponse = new ErrorResponseDto(status.value(), e.getMessage());
         return ResponseEntity
                 .status(status)

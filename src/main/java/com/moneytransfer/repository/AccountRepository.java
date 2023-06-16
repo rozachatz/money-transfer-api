@@ -11,15 +11,21 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AccountRepository extends JpaRepository<Account, UUID> {
+    String GET_ACCOUNTS_QUERY = "SELECT " +
+            "a1 as sourceAccount, a2 as targetAccount " +
+            "FROM " +
+            "Account a1, Account a2 " +
+            "WHERE a1.id = :sourceAccountId AND a2.id = :targetAccountId";
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT a1 as sourceAccount, a2 as targetAccount FROM Account a1, Account a2 WHERE a1.id = :sourceAccountId AND a2.id = :targetAccountId")
+    @Query(value = GET_ACCOUNTS_QUERY)
     Optional<TransferAccountsDto> findByIdAndLockPessimistic(UUID sourceAccountId, UUID targetAccountId);
 
     @Lock(LockModeType.OPTIMISTIC)
-    @Query("SELECT a1 as sourceAccount, a2 as targetAccount FROM Account a1, Account a2 WHERE a1.id = :sourceAccountId AND a2.id = :targetAccountId")
+    @Query(value = GET_ACCOUNTS_QUERY)
     Optional<TransferAccountsDto> findByIdAndLockOptimistic(UUID sourceAccountId, UUID targetAccountId);
 
-    @Query("SELECT a1 as sourceAccount, a2 as targetAccount FROM Account a1, Account a2 WHERE a1.id = :sourceAccountId AND a2.id = :targetAccountId")
+    @Query(value = GET_ACCOUNTS_QUERY)
     Optional<TransferAccountsDto> findByIdAndLock(UUID sourceAccountId, UUID targetAccountId);
 
 }

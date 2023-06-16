@@ -31,6 +31,7 @@ public class Account {
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
     }
+
     public void debit(BigDecimal amount) {
         this.balance = balance.subtract(amount);
     }

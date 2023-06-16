@@ -16,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-
-
 @Service
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService { //responsible for business logic, error handling
@@ -30,16 +28,16 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
         sourceAccount.debit(amount);
         targetAccount.credit(amount);
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
-        return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, Currency.EUR));
+        return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
     }
     private void validateTransfer(TransferAccountsDto accounts, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         if (sourceAccountId.equals(targetAccountId)) {  /* AC3: Same Account */
-            String errorMessage = "Transfer in the same account is not allowed. ";
+            String errorMessage = "Transfer in the same account is not allowed. Account ID: "+sourceAccountId+"." ;
             throw new SameAccountException(errorMessage);
         }
         BigDecimal balance = accounts.getSourceAccount().getBalance();
         if (balance.compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
-            String errorMessage = "Insufficient balance in the source account. Account ID:  "+ sourceAccountId +  " ,Requested Amount: " + amount + " ,Available Balance: " + balance;
+            String errorMessage = "Insufficient balance in the source account. Account ID:  "+ sourceAccountId +  " ,Requested Amount: " + amount + ",Available Balance: " + balance+".";
             throw new InsufficientBalanceException(errorMessage);
         }
     }
@@ -61,21 +59,21 @@ public class TransactionServiceImpl implements TransactionService { //responsibl
     public TransferAccountsDto getAccountsByIdsPessimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
         return accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + " ,Target Account ID: " + targetAccountId;
+                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId+".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
     public TransferAccountsDto getAccountsByIdsOptimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
         return accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + " ,Target Account ID: " + targetAccountId;
+                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId+".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
     public TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
         return accountRepository.findByIdAndLock(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + " ,Target Account ID: " + targetAccountId;
+                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId+".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }

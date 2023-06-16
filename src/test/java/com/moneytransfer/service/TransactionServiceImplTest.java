@@ -1,4 +1,4 @@
-package service;
+package com.moneytransfer.service;
 
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
@@ -9,7 +9,6 @@ import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.exceptions.SameAccountException;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionRepository;
-import com.moneytransfer.service.TransactionServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,12 +38,12 @@ public class TransactionServiceImplTest {
 
     @BeforeEach
     public void setup() {
-        sourceAccount = new Account(0, UUID.randomUUID(), BigDecimal.ONE, Currency.EUR, LocalDateTime.now() );
+        sourceAccount = new Account(0, UUID.randomUUID(), BigDecimal.ONE, Currency.EUR, LocalDateTime.now());
     }
 
     @Test
     public void testHappyPath() {
-        Account targetAccount = new Account(0,UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now() );
+        Account targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now());
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
@@ -62,7 +61,7 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testInsufficientBalance() {
-        Account targetAccount = new Account(0,UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now() );
+        Account targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now());
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
