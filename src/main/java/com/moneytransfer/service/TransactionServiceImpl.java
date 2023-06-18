@@ -3,7 +3,6 @@ package com.moneytransfer.service;
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.*;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionRepository;
