@@ -3,25 +3,13 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Technologies](#technologies)
-- [API Documentation](#api-documentation)
 - [Database](#database)
-    - [Data Model](#data-model)
-      - [Account Entity](#account-entity)
-      - [Transaction Entity](#transaction-entity)
-    - [Accessing the H2 Console](#accessing-the-h2-console)
 - [Architecture](#architecture)
-  - [Presentation Layer](#presentation-layer)
-    - [Controller](#controller)
-    - [Data Transfer Object (DTO)](#data-transfer-object-dto)
-  - [Service Layer](#service-layer)
-  - [Repository Layer](#repository-layer)
-  - [Entity Layer](#entity-layer)
-  - [Exception Package](#exception-package)
 - [Testing](#testing)
 - [Future Containerization](#futurecontainerization)
 
 ## Introduction
-This project is a simple microservice that handles financial transactions between bank accounts. In this README, you will find information about the project architecture, testing and other relevant details.
+This project includes a simple microservice for handling financial transactions. The usage of a RESTFull API enables the user to initiate a transfer between two accounts or retrieve a resource by sending an HTTP request to the appropriate endpoint.
 
 ## Technologies
 * Java
@@ -29,19 +17,22 @@ This project is a simple microservice that handles financial transactions betwee
 * Maven
 * H2 (Embedded Database)
 
-## API Documentation
-You can interact with the Money Transfer API by sending HTTP requests to the provided endpoints. Here's an example of how to make a request using curl:
-
+## Usage
+You can interact with the Money Transfer API by sending POST/GET HTTP requests to the provided endpoints.
+### POST Requests
 ````bash
-curl -X POST -H "Content-Type: application/json" -d "{ \"sourceAccountId\": 1, \"targetAccountId\": 2, \"amount\": "30.00"}" "http://localhost:8080/transferMoney"
+curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"0cc2e883-b829-4954-b8ec-ecbf64f149cb\", \"targetAccountId\": \"0324f04e-1c24-43b8-ab8f-04283eaaceb5\", \"amount\": 30.00}" "http://localhost:8080/api/transfer"
 ````
 
-This curl command is used to initiate a transfer of 30.00 EUR (current version: default currency) from account with ID 1 to account with ID 2, using the /transferMoney endpoint of the MoneyTransfer API.
+A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts with amount and ids as specified in the .json payload.
+Option for optimistic and pessimistic type of locking is also available by sending a POST request to the endpoints "http://localhost:8080/api/transfer/optimistic" and "http://localhost:8080/api/transfer/pessimistic", respectively.
+ 
+### GET Requests 
+The endpoint "http://localhost:8080/api/transfer/{transactionId}" is used to retrieve information for a transaction with id equal to {transactionId} (type: UUID).
+
 
 ## Database
-### Data Model
-In this section, you will find an overview of the entities (or tables) used in the application's data model.
-#### Account Entity
+### Account
 The Account entity represents a bank account and has the following attributes:
 
 | Field     | Description                    |
@@ -51,7 +42,7 @@ The Account entity represents a bank account and has the following attributes:
 | currency          | Currency of the account (e.g., "GBP") |
 | createdAt         | Date and time when the account was created |
 
-##### Transaction Entity
+### Transaction
 The Transaction entity represents a financial transaction between two accounts and includes the following attributes:
 
 | Field            | Description                          |
@@ -74,33 +65,36 @@ To access the H2 console for the MoneyTransfer API, follow these steps:
 5. Click the "Connect" button to log in to the H2 console.
 
 ## Architecture
-### Presentation Layer:
-- **Controller**: Exposes the API, which acts as an intermediary between the server and the client. It processes the requests and returns the appropriate response.
-- **Data Transfer Object (DTO)**: Container that represents the data that will be transferred between the client and the server.
+### Presentation Layer
+**Controller**: Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
 
-### Service Layer:
-- Operates on the data transferred between the client and the server and performs operations according to the business logic of the application.
+### Data Transfer Objects (Dtos)
+Classes that are used only as containers e.g., TransferRequestDto.java holds the data that the client sends to the server when requesting a new transfer.
 
-### Repository Layer:
-- Provides access to the database by extending the JPARepository.
-- Performs custom queries (@Query) and CRUD (Create, Read, Update, Delete) operations, which are predefined methods like save(), findById(). 
+### Service
+Contains the business logic of the application.
 
-### Entity Layer:
+### JPA Repositories
+- Provide direct access to the database, as well as CRUD operations.
+- Allow the execution of custom queries.
+
+### Entities
 - Represents the data model of the application.
 - Defines the structure and relationships between entities (tables) in the database.
 
-### Exception Package:
-- Global API Exception Handler: uses @ControllerAdvice to handle all different exceptions of the application.
-- Uses hierarchy to define exception classes for handling different error scenarios.
+### Exception Package
+- GlobalAPIExceptionHandler.java: @ControllerAdvice enables handling of all different exceptions in the application.
+- Exceptions can be grouped using hierarchy (i.e., all exceptions extend MoneyTransferException.java).
 
-## Testing
-The `ApplicationTests.java` file located at `src/test/java` contains mock tests that validate the fulfillment of all acceptance criteria (ACs) of the MoneyTransfer API. These tests simulate the behavior of the service layer using mock objects and verify the expected functionality.
+## Unit Tests
+The `TransactionServiceImplTest.java` file located at `src/test/java/com.moneytransfer/service` contains tests for the service implementation, thus external dependencies (e.g. repositories) are mocked.
 
-The mock tests cover the following ACs:
-- AC 1: Happy path for money transfer between two accounts
+The unit tests cover the following ACs:
+- AC 1: Happy path for money transfer between two accounts (results in successful transfer)
 - AC 2: Insufficient balance to process money transfer
-- AC 3: Transfer between the same account
-- AC 4: One or more of the accounts do not exist
+- AC 3: Transfer in the same account
+- AC 4: Source/target account does not exist
 
 ## Future Containerization
 In future versions, a Docker container will be provided for easier installation and running of the application in different environments.
+
