@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -21,7 +22,6 @@ public class Account {
     @Version //optimistic
     protected int version;
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
@@ -36,4 +36,21 @@ public class Account {
         this.balance = balance.subtract(amount);
     }
     // TODO: Currency Exchange Mechanism (internal storage or API)
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Account other = (Account) obj;
+        return Objects.equals(id, other.id);
+    }
 }

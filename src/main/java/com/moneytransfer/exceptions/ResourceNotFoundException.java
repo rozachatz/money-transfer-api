@@ -1,7 +1,13 @@
 package com.moneytransfer.exceptions;
 
-public class ResourceNotFoundException extends MoneyTransferException {
+import org.springframework.http.HttpStatus;
+
+public class ResourceNotFoundException extends MoneyTransferException implements ExceptionStatus {
     public ResourceNotFoundException(String message) {
         super(message);
+    }
+
+    public HttpStatus getHttpStatus() {
+        return HttpStatus.NOT_FOUND;
     }
 }

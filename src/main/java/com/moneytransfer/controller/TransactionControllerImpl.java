@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@RequestMapping("/api")
 @RestController
 @RequiredArgsConstructor
 public class TransactionControllerImpl implements TransactionController {
@@ -29,12 +28,13 @@ public class TransactionControllerImpl implements TransactionController {
                 transaction.getAmount()));
     }
 
-    @PostMapping("/transfer")
-    public ResponseEntity<GetTransferDto> transfer(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
-        Transaction transaction = transactionService.transfer(
-                transferRequestDTO.sourceAccountId(),
-                transferRequestDTO.targetAccountId(),
-                transferRequestDTO.amount());
+    @PostMapping("/transfer/{requestId}")
+    public ResponseEntity<GetTransferDto> transfer(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
+        Transaction transaction = transactionService.processRequest(
+                transferRequestDto.sourceAccountId(),
+                transferRequestDto.targetAccountId(),
+                transferRequestDto.amount(),
+                requestId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(

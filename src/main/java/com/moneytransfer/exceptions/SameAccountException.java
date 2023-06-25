@@ -1,8 +1,14 @@
 package com.moneytransfer.exceptions;
 
-public class SameAccountException extends MoneyTransferException {
+import org.springframework.http.HttpStatus;
+
+public class SameAccountException extends MoneyTransferException implements ExceptionStatus {
     public SameAccountException(String message) {
         super(message);
+    }
+
+    public HttpStatus getHttpStatus() {
+        return HttpStatus.BAD_REQUEST;
     }
 
 }

@@ -1,7 +1,13 @@
 package com.moneytransfer.exceptions;
 
-public class InsufficientBalanceException extends MoneyTransferException {
+import org.springframework.http.HttpStatus;
+
+public class InsufficientBalanceException extends MoneyTransferException implements ExceptionStatus {
     public InsufficientBalanceException(String message) {
         super(message);
+    }
+
+    public HttpStatus getHttpStatus() {
+        return HttpStatus.PAYMENT_REQUIRED;
     }
 }
