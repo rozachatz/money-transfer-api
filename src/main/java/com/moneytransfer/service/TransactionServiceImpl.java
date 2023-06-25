@@ -37,36 +37,17 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
-
         String JsonBody = sourceAccountId.toString() + targetAccountId.toString() + amount.toString();
         validateRequest(transactionRequest, JsonBody);
 
         switch (transactionRequest.getRequestStatus()) {
-
             case SUCCESS:
                 return transactionRequest.getTransaction();
-
             case IN_PROGRESS:
                 transactionRequest.setRequestBodyJson(JsonBody);
-                try {
-                    Transaction transaction = transfer(sourceAccountId, targetAccountId, amount);
-
-                    if (transaction == null) { //rollback
-                        String errorMessage = "Transaction rollback occurred. Transfer request with ID " + transactionRequest.getRequestId() + " has failed.";
-                        updateTransactionRequestOnFailure(transactionRequest, errorMessage);
-
-                    } else {
-                        updateTransactionRequestOnSuccess(transactionRequest, transaction);
-                        return transaction;
-                    }
-                } catch (MoneyTransferException e) {
-                    updateTransactionRequestOnFailure(transactionRequest, e.getMessage());
-                    throw e;
-                }
-
+                return processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount);
             case FAILED:
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
-
             default:
                 String errorMessage = "Unexpected request status: " + transactionRequest.getRequestStatus();
                 updateTransactionRequestOnFailure(transactionRequest, errorMessage);
@@ -74,7 +55,20 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
     }
-
+    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        try {
+            Transaction transaction = transfer(sourceAccountId, targetAccountId, amount);
+            updateTransactionRequestOnSuccess(transactionRequest, transaction);
+            return transaction;
+        } catch (MoneyTransferException e) {
+            updateTransactionRequestOnFailure(transactionRequest, e.getMessage());
+            throw e;//propagate for handling in @ControllerAdvice
+        } catch (RuntimeException e) {
+            String errorMessage = "Transaction rollback occurred. Transfer request with ID " + transactionRequest.getRequestId() + " has failed.";
+            updateTransactionRequestOnFailure(transactionRequest, errorMessage);
+            throw new MoneyTransferException(errorMessage);
+        }
+    }
     private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
         String requestJsonBody = transactionRequest.getRequestBodyJson();
         if (!JsonBody.equals(requestJsonBody) && requestJsonBody != null) {
@@ -82,7 +76,9 @@ public class TransactionServiceImpl implements TransactionService {
             throw new RequestConflictException(errorMessage);
         }
     }
-
+    private void testRollBackRequest(){
+            throw new RuntimeException("This is a test for rollback");
+    }
     private void updateTransactionRequestOnFailure(TransactionRequest transactionRequest, String errorMessage) {
         transactionRequest.setRequestStatus(RequestStatus.FAILED);
         transactionRequest.setErrorMessage(errorMessage);
@@ -111,6 +107,7 @@ public class TransactionServiceImpl implements TransactionService {
         validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
         Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
         sourceAccount.debit(amount);
+       // testRollBackRequest();
         targetAccount.credit(amount);
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
         return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
