@@ -34,9 +34,11 @@ public class TransactionServiceImpl implements TransactionService {
                 });
     }
 
+    //PROCESS REQUESTS
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
+
         String JsonBody = sourceAccountId.toString() + targetAccountId.toString() + amount.toString();
         validateRequest(transactionRequest, JsonBody);
 
@@ -53,32 +55,27 @@ public class TransactionServiceImpl implements TransactionService {
                 updateTransactionRequestOnFailure(transactionRequest, errorMessage);
                 throw new MoneyTransferException(errorMessage);
         }
-
     }
+
     private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         try {
             Transaction transaction = transfer(sourceAccountId, targetAccountId, amount);
             updateTransactionRequestOnSuccess(transactionRequest, transaction);
             return transaction;
-        } catch (MoneyTransferException e) {
+        } catch (MoneyTransferException | RuntimeException e) { //checked or unchecked (rollback)
             updateTransactionRequestOnFailure(transactionRequest, e.getMessage());
-            throw e;//propagate for handling in @ControllerAdvice
-        } catch (RuntimeException e) {
-            String errorMessage = "Transaction rollback occurred. Transfer request with ID " + transactionRequest.getRequestId() + " has failed.";
-            updateTransactionRequestOnFailure(transactionRequest, errorMessage);
-            throw new MoneyTransferException(errorMessage);
+            throw e;//propagate
         }
     }
-    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
+
+    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws ResourceNotFoundException {
         String requestJsonBody = transactionRequest.getRequestBodyJson();
         if (!JsonBody.equals(requestJsonBody) && requestJsonBody != null) {
-            String errorMessage = "The JSON body provided does not match the original request body with request ID: " + transactionRequest.getRequestId() + ".";
-            throw new RequestConflictException(errorMessage);
+            String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
+            throw new ResourceNotFoundException(errorMessage);
         }
     }
-    private void testRollBackRequest(){
-            throw new RuntimeException("This is a test for rollback");
-    }
+
     private void updateTransactionRequestOnFailure(TransactionRequest transactionRequest, String errorMessage) {
         transactionRequest.setRequestStatus(RequestStatus.FAILED);
         transactionRequest.setErrorMessage(errorMessage);
@@ -90,6 +87,8 @@ public class TransactionServiceImpl implements TransactionService {
         transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
         transactionRequestRepository.save(transactionRequest);
     }
+
+    //TRANSFER
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
     public Transaction transfer(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
@@ -103,11 +102,11 @@ public class TransactionServiceImpl implements TransactionService {
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
+
     private Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
         Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
         sourceAccount.debit(amount);
-       // testRollBackRequest();
         targetAccount.credit(amount);
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
         return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
@@ -133,7 +132,7 @@ public class TransactionServiceImpl implements TransactionService {
                 });
     }
 
-    /** PESSIMISTIC, OPTIMISTIC LOCKING TRANSACTIONS **/
+    //TRANSFERS: PESSIMISTIC, OPTIMISTIC LOCKING
     @Transactional
     public Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);

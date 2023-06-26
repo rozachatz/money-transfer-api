@@ -1,10 +1,4 @@
--- Initialize embedded H2 database
--- Insert data into the account table
---INSERT INTO accounts (id, balance, currency, created_at, version) VALUES
---  (RANDOM_UUID(), 1000.00, 'EUR', CURRENT_TIMESTAMP, 0),
---  (RANDOM_UUID(), 500.00, 'EUR', CURRENT_TIMESTAMP, 0),
---  (RANDOM_UUID(), 800.00, 'EUR', CURRENT_TIMESTAMP, 0),
---  (RANDOM_UUID(), 2000.00, 'EUR', CURRENT_TIMESTAMP, 0);
+-- Insert rows into the accounts table
   INSERT INTO accounts (id, balance, currency, created_at, version) VALUES
     ('79360a7e-5249-4822-b3fe-dabfd40b8737', 1000.00, 'EUR', CURRENT_TIMESTAMP, 0),
     ('ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18', 500.00, 'EUR', CURRENT_TIMESTAMP, 0),
