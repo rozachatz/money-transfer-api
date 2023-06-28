@@ -35,19 +35,16 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     //PROCESS REQUESTS
-    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
-
         String JsonBody = sourceAccountId.toString() + targetAccountId.toString() + amount.toString();
         validateRequest(transactionRequest, JsonBody);
-
         switch (transactionRequest.getRequestStatus()) {
             case SUCCESS:
                 return transactionRequest.getTransaction();
             case IN_PROGRESS:
-                transactionRequest.setRequestBodyJson(JsonBody);
-                return processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount);
+                return processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount, JsonBody);
             case FAILED:
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
             default:
@@ -57,7 +54,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, String JsonBody) throws MoneyTransferException {
         try {
             Transaction transaction = transfer(sourceAccountId, targetAccountId, amount);
             updateTransactionRequestOnSuccess(transactionRequest, transaction);
@@ -65,27 +62,28 @@ public class TransactionServiceImpl implements TransactionService {
         } catch (MoneyTransferException | RuntimeException e) { //checked or unchecked (rollback)
             updateTransactionRequestOnFailure(transactionRequest, e.getMessage());
             throw e;//propagate
+        } finally {
+            transactionRequest.setRequestBodyJson(JsonBody);
+            transactionRequestRepository.save(transactionRequest);
         }
     }
 
-    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws ResourceNotFoundException {
+    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
         String requestJsonBody = transactionRequest.getRequestBodyJson();
         if (!JsonBody.equals(requestJsonBody) && requestJsonBody != null) {
             String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
-            throw new ResourceNotFoundException(errorMessage);
+            throw new RequestConflictException(errorMessage);
         }
     }
 
     private void updateTransactionRequestOnFailure(TransactionRequest transactionRequest, String errorMessage) {
         transactionRequest.setRequestStatus(RequestStatus.FAILED);
         transactionRequest.setErrorMessage(errorMessage);
-        transactionRequestRepository.save(transactionRequest);
     }
 
     private void updateTransactionRequestOnSuccess(TransactionRequest transactionRequest, Transaction transaction) {
         transactionRequest.setTransaction(transaction);
         transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
-        transactionRequestRepository.save(transactionRequest);
     }
 
     //TRANSFER
@@ -119,7 +117,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
         BigDecimal balance = accounts.getSourceAccount().getBalance();
         if (balance.compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
-            String errorMessage = "Insufficient balance in the source account. Account ID:  " + sourceAccountId + " ,Requested Amount: " + amount + ",Available Balance: " + balance + ".";
+            String errorMessage = "Insufficient balance in the source account. Account ID:  " + sourceAccountId + ", Requested Amount: " + amount + ", Available Balance: " + balance + ".";
             throw new InsufficientBalanceException(errorMessage);
         }
     }

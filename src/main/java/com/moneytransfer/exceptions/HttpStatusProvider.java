@@ -2,6 +2,6 @@ package com.moneytransfer.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public interface ExceptionStatus {
+public interface HttpStatusProvider {
     HttpStatus getHttpStatus();
 }
