@@ -28,13 +28,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     public TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
         return transactionRequestRepository.findById(requestId)
-                .orElseGet(() -> {
-                    TransactionRequest transactionRequest = new TransactionRequest(requestId, RequestStatus.IN_PROGRESS);
-                    return transactionRequestRepository.save(transactionRequest);
-                });
+                .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, RequestStatus.IN_PROGRESS)));
     }
 
-    //PROCESS REQUESTS
+    //REQUESTS
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
@@ -48,9 +45,15 @@ public class TransactionServiceImpl implements TransactionService {
             case FAILED:
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
             default:
-                String errorMessage = "Unexpected request status: " + transactionRequest.getRequestStatus();
-                updateTransactionRequestOnFailure(transactionRequest, errorMessage);
-                throw new MoneyTransferException(errorMessage);
+                throw new MoneyTransferException(processUnknownRequest(transactionRequest));
+        }
+    }
+
+    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
+        String requestJsonBody = transactionRequest.getRequestBodyJson();
+        if (!JsonBody.equals(requestJsonBody) && requestJsonBody != null) {
+            String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
+            throw new RequestConflictException(errorMessage);
         }
     }
 
@@ -68,12 +71,11 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
-        String requestJsonBody = transactionRequest.getRequestBodyJson();
-        if (!JsonBody.equals(requestJsonBody) && requestJsonBody != null) {
-            String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
-            throw new RequestConflictException(errorMessage);
-        }
+    private String processUnknownRequest(TransactionRequest transactionRequest) {
+        String errorMessage = "Unexpected request status: " + transactionRequest.getRequestStatus();
+        updateTransactionRequestOnFailure(transactionRequest, errorMessage);
+        transactionRequestRepository.save(transactionRequest);
+        return errorMessage;
     }
 
     private void updateTransactionRequestOnFailure(TransactionRequest transactionRequest, String errorMessage) {
@@ -82,11 +84,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void updateTransactionRequestOnSuccess(TransactionRequest transactionRequest, Transaction transaction) {
-        transactionRequest.setTransaction(transaction);
         transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
+        transactionRequest.setTransaction(transaction);
     }
 
-    //TRANSFER
+    //TRANSFERS
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
     public Transaction transfer(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
