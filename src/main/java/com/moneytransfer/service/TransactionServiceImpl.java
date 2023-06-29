@@ -35,7 +35,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
-        String JsonBody = sourceAccountId.toString() + targetAccountId.toString() + amount.toString();
+        String JsonBody = sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
         validateRequest(transactionRequest, JsonBody);
         switch (transactionRequest.getRequestStatus()) {
             case SUCCESS:
