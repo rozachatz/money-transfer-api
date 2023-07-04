@@ -35,7 +35,6 @@ public class Account {
     public void debit(BigDecimal amount) {
         this.balance = balance.subtract(amount);
     }
-    // TODO: Currency Exchange Mechanism (internal storage or API)
 
     @Override
     public int hashCode() {

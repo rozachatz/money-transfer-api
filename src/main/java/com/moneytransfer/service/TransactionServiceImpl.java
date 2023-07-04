@@ -26,32 +26,36 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionRequestRepository transactionRequestRepository;
 
+    //REQUESTS
     public TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
         return transactionRequestRepository.findById(requestId)
                 .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, RequestStatus.IN_PROGRESS)));
     }
 
-    //REQUESTS
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
-        String JsonBody = sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
-        validateRequest(transactionRequest, JsonBody);
-        switch (transactionRequest.getRequestStatus()) {
-            case SUCCESS:
-                return transactionRequest.getTransaction();
-            case IN_PROGRESS:
-                return processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount, JsonBody);
-            case FAILED:
+        String JsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
+        return switch (transactionRequest.getRequestStatus()) {
+            case SUCCESS -> {
+                validateJson(transactionRequest, JsonBody);
+                yield transactionRequest.getTransaction();
+            }
+            case IN_PROGRESS ->
+                    processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount, JsonBody);
+            case FAILED -> {
+                validateJson(transactionRequest, JsonBody);
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
-            default:
-                throw new MoneyTransferException(processUnknownRequest(transactionRequest));
-        }
+            }
+        };
     }
 
-    private void validateRequest(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
-        String requestJsonBody = transactionRequest.getRequestBodyJson();
-        if (!JsonBody.equals(requestJsonBody) && requestJsonBody != null) {
+    private String buildJsonString(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) {
+        return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
+    }
+
+    private void validateJson(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
+        if (!JsonBody.equals(transactionRequest.getJsonBody())) {
             String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
             throw new RequestConflictException(errorMessage);
         }
@@ -64,18 +68,11 @@ public class TransactionServiceImpl implements TransactionService {
             return transaction;
         } catch (MoneyTransferException | RuntimeException e) { //checked or unchecked (rollback)
             updateTransactionRequestOnFailure(transactionRequest, e.getMessage());
-            throw e;//propagate
+            throw e;
         } finally {
-            transactionRequest.setRequestBodyJson(JsonBody);
+            transactionRequest.setJsonBody(JsonBody);
             transactionRequestRepository.save(transactionRequest);
         }
-    }
-
-    private String processUnknownRequest(TransactionRequest transactionRequest) {
-        String errorMessage = "Unexpected request status: " + transactionRequest.getRequestStatus();
-        updateTransactionRequestOnFailure(transactionRequest, errorMessage);
-        transactionRequestRepository.save(transactionRequest);
-        return errorMessage;
     }
 
     private void updateTransactionRequestOnFailure(TransactionRequest transactionRequest, String errorMessage) {
@@ -96,7 +93,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     public TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
-        return accountRepository.findByIdAndLock(sourceAccountId, targetAccountId)
+        return accountRepository.findByIds(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
                     String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
                     return new ResourceNotFoundException(errorMessage);

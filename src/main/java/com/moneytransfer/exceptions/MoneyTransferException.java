@@ -6,6 +6,7 @@ public class MoneyTransferException extends Exception implements HttpStatusProvi
     public MoneyTransferException(String message) {
         super(message);
     }
+
     public HttpStatus getHttpStatus() {
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }

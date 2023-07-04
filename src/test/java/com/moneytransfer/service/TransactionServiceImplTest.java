@@ -48,7 +48,7 @@ public class TransactionServiceImplTest {
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
         Mockito.when(transferAccountsDto.getTargetAccount()).thenReturn(targetAccount);
-        Mockito.when(accountRepository.findByIdAndLock(sourceAccount.getId(), targetAccount.getId()))
+        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), targetAccount.getId()))
                 .thenReturn(Optional.of(transferAccountsDto));
 
         Assertions.assertDoesNotThrow(() ->
@@ -65,7 +65,7 @@ public class TransactionServiceImplTest {
 
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
         Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
-        Mockito.when(accountRepository.findByIdAndLock(sourceAccount.getId(), targetAccount.getId()))
+        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), targetAccount.getId()))
                 .thenReturn(Optional.of(transferAccountsDto));
 
         assertThrows(InsufficientBalanceException.class, () ->
@@ -79,7 +79,7 @@ public class TransactionServiceImplTest {
     @Test
     public void testTransferSameAccount() {
         TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(accountRepository.findByIdAndLock(sourceAccount.getId(), sourceAccount.getId()))
+        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), sourceAccount.getId()))
                 .thenReturn(Optional.of(transferAccountsDto));
 
         assertThrows(SameAccountException.class, () ->
@@ -92,7 +92,7 @@ public class TransactionServiceImplTest {
     @Test
     public void testAccountNotFound() {
         UUID nonExistingAccountId = UUID.randomUUID();
-        Mockito.when(accountRepository.findByIdAndLock(sourceAccount.getId(), nonExistingAccountId))
+        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), nonExistingAccountId))
                 .thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> transactionServiceImpl.transfer(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));

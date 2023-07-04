@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "transaction_request")
+@Table(name = "transaction_requests")
 @Getter
 @Setter
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
@@ -21,7 +21,7 @@ public class TransactionRequest {
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
     private Transaction transaction;//null if requestStatus = FAIL
     private RequestStatus requestStatus;
-    private String RequestBodyJson;
+    private String jsonBody;
     private String errorMessage;//null if requestStatus IN (SUCCESS,IN_PROGRESS)
 
     public TransactionRequest(UUID requestId, RequestStatus requestStatus) {
