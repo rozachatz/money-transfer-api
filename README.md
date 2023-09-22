@@ -93,5 +93,17 @@ The unit tests cover the following ACs:
 - AC 3: Transfer in the same account
 - AC 4: Source/target account does not exist
 
-## Future Containerization
-In future versions, a Docker container will be provided for easier installation and running of the application in different environments.
+## API Documentation
+Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
+
+Or you can view the less-user friendly API documentation in "http://localhost:8080/api/v3/docs".
+
+Note: Spring-boot versions >=3.x.x are NOT compatible Open API v2!
+
+## Containerization
+The app is now dockerized! Build and run the docker image using the following commands: 
+````bash
+docker build -t money-transfer-app .
+docker run money-transfer-app
+````
+Feel free to change the port/.jar file according to your liking!
