@@ -1,12 +1,15 @@
 package com.moneytransfer.controller;
 
+import com.moneytransfer.dto.GetAccountDto;
 import com.moneytransfer.dto.GetTransferDto;
 import com.moneytransfer.dto.TransferRequestDto;
+import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +21,25 @@ import java.util.UUID;
 public class TransactionControllerImpl implements TransactionController {
     private final TransactionService transactionService;
 
+    @Cacheable("transactions")
     @GetMapping("/transfer/{id}")
-    public ResponseEntity<GetTransferDto> getById(@PathVariable UUID id) throws ResourceNotFoundException {
-        Transaction transaction = transactionService.getById(id);
+    public ResponseEntity<GetTransferDto> getTransactionById(@PathVariable UUID id) throws ResourceNotFoundException {
+        Transaction transaction = transactionService.getTransactionById(id);
         return ResponseEntity.ok(new GetTransferDto(
                 transaction.getId(),
                 transaction.getSourceAccount().getId(),
                 transaction.getTargetAccount().getId(),
                 transaction.getAmount()));
+    }
+    @Cacheable("accounts")
+    @GetMapping("/account/{id}")
+    public ResponseEntity<GetAccountDto> getAccountById(@PathVariable UUID id) throws ResourceNotFoundException {
+        Account account = transactionService.getAccountById(id);
+        return ResponseEntity.ok(new GetAccountDto(
+                account.getId(),
+                account.getBalance(),
+                account.getCurrency(),
+                account.getCreatedAt()));
     }
 
     @PostMapping("/transfer/{requestId}")

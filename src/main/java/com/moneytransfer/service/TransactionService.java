@@ -1,6 +1,7 @@
 package com.moneytransfer.service;
 
 import com.moneytransfer.dto.TransferAccountsDto;
+import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.entity.TransactionRequest;
 import com.moneytransfer.exceptions.MoneyTransferException;
@@ -22,7 +23,9 @@ public interface TransactionService {
 
     TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException;
 
-    Transaction getById(UUID id) throws ResourceNotFoundException;
+    Transaction getTransactionById(UUID id) throws ResourceNotFoundException;
+
+    Account getAccountById(UUID id) throws ResourceNotFoundException;
 
     TransactionRequest getOrCreateTransactionRequest(UUID requestId);
 

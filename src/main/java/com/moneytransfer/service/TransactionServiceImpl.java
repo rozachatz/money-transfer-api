@@ -121,10 +121,18 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    public Transaction getById(UUID id) throws ResourceNotFoundException {
+    public Transaction getTransactionById(UUID id) throws ResourceNotFoundException {
         return transactionRepository.findById(id)
                 .orElseThrow(() -> {
                     String errorMessage = "Transaction with ID: " + id + " was not found.";
+                    return new ResourceNotFoundException(errorMessage);
+                });
+    }
+
+    public Account getAccountById(UUID id) throws ResourceNotFoundException {
+        return accountRepository.findById(id)
+                .orElseThrow(() -> {
+                    String errorMessage = "Account with ID: " + id + " was not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
