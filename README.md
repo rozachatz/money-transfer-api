@@ -25,8 +25,8 @@ curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"793
 ````
 A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts with amount and ids as specified in the .json payload.
 Option for optimistic and pessimistic type of locking is also available by sending a POST request to the endpoints "http://localhost:8080/api/transfer/optimistic" and "http://localhost:8080/api/transfer/pessimistic", respectively.
- 
-### GET Requests 
+
+### GET Requests
 The endpoint "http://localhost:8080/api/transfer/{transactionId}" is used to retrieve information for a transaction with id equal to {transactionId} (type: UUID).
 
 ## Database
@@ -101,9 +101,7 @@ Or you can view the less-user friendly API documentation in "http://localhost:80
 Note: Spring-boot versions >=3.x.x are NOT compatible Open API v2!
 
 ## Containerization
-The app is now dockerized! Build and run the docker image using the following commands: 
+The app and db are now dockerized! To let the magic happen execute the following command:
 ````bash
-docker build -t money-transfer-app .
-docker run money-transfer-app
+docker compose up -- build
 ````
-Feel free to change the port/.jar file according to your liking!

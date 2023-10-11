@@ -16,3 +16,12 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
       # copy the sql script to create tables
       - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+  app:
+    build:
+      context: .  # Use the current directory as the build context
+      dockerfile: Dockerfile  # Specify the Dockerfile to use
+    image: money-transfer-app
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db  # Wait for the 'db' service to be ready before starting 'app'
