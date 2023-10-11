@@ -6,7 +6,7 @@
 - [Database](#database)
 - [Architecture](#architecture)
 - [Testing](#testing)
-- [Future Containerization](#future-containerization)
+- [Future Containerization](#futurecontainerization)
 
 ## Introduction
 This project includes a simple microservice for handling financial transactions. The usage of a RESTFull API enables the user to initiate a transfer between two accounts or retrieve a resource by sending an HTTP request to the appropriate endpoint.
@@ -23,11 +23,13 @@ You can interact with the Money Transfer API by sending POST/GET HTTP requests t
 ````bash
 curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"79360a7e-5249-4822-b3fe-dabfd40b8737\", \"targetAccountId\": \"ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18\", \"amount\": 30.00}" "http://localhost:8080/api/transfer"
 ````
+
 A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts with amount and ids as specified in the .json payload.
 Option for optimistic and pessimistic type of locking is also available by sending a POST request to the endpoints "http://localhost:8080/api/transfer/optimistic" and "http://localhost:8080/api/transfer/pessimistic", respectively.
 
 ### GET Requests
 The endpoint "http://localhost:8080/api/transfer/{transactionId}" is used to retrieve information for a transaction with id equal to {transactionId} (type: UUID).
+
 
 ## Database
 ### Account
@@ -93,6 +95,7 @@ The unit tests cover the following ACs:
 - AC 3: Transfer in the same account
 - AC 4: Source/target account does not exist
 
+
 ## API Documentation
 Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
 
@@ -105,3 +108,4 @@ The app and db are now dockerized! To let the magic happen execute the following
 ````bash
 docker compose up -- build
 ````
+
