@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ErrorResponseDto {
-    private int status;
+    private int HttpStatusValue;
     private String message;
+
 }

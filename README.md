@@ -21,13 +21,13 @@ This project includes a simple microservice for handling financial transactions.
 You can interact with the Money Transfer API by sending POST/GET HTTP requests to the provided endpoints.
 ### POST Requests
 ````bash
-curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"0cc2e883-b829-4954-b8ec-ecbf64f149cb\", \"targetAccountId\": \"0324f04e-1c24-43b8-ab8f-04283eaaceb5\", \"amount\": 30.00}" "http://localhost:8080/api/transfer"
+curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"79360a7e-5249-4822-b3fe-dabfd40b8737\", \"targetAccountId\": \"ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18\", \"amount\": 30.00}" "http://localhost:8080/api/transfer"
 ````
 
 A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts with amount and ids as specified in the .json payload.
 Option for optimistic and pessimistic type of locking is also available by sending a POST request to the endpoints "http://localhost:8080/api/transfer/optimistic" and "http://localhost:8080/api/transfer/pessimistic", respectively.
- 
-### GET Requests 
+
+### GET Requests
 The endpoint "http://localhost:8080/api/transfer/{transactionId}" is used to retrieve information for a transaction with id equal to {transactionId} (type: UUID).
 
 
@@ -95,6 +95,17 @@ The unit tests cover the following ACs:
 - AC 3: Transfer in the same account
 - AC 4: Source/target account does not exist
 
-## Future Containerization
-In future versions, a Docker container will be provided for easier installation and running of the application in different environments.
+
+## API Documentation
+Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
+
+Or you can view the less-user friendly API documentation in "http://localhost:8080/api/v3/docs".
+
+Note: Spring-boot versions >=3.x.x are NOT compatible Open API v2!
+
+## Containerization
+The app and db are now dockerized! To let the magic happen execute the following command:
+````bash
+docker compose up -- build
+````
 

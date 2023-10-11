@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -16,7 +17,6 @@ import java.util.UUID;
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Transaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne()
@@ -31,4 +31,20 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     private Currency currency;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Transaction other = (Transaction) obj;
+        return Objects.equals(id, other.id);
+    }
 }
