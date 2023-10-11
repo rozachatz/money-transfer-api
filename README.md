@@ -6,7 +6,7 @@
 - [Database](#database)
 - [Architecture](#architecture)
 - [Testing](#testing)
-- [Future Containerization](#futurecontainerization)
+- [Dockerization](#dockerization)
 
 ## Introduction
 This project includes a simple microservice for handling financial transactions. The usage of a RESTFull API enables the user to initiate a transfer between two accounts or retrieve a resource by sending an HTTP request to the appropriate endpoint.
@@ -15,7 +15,7 @@ This project includes a simple microservice for handling financial transactions.
 * Java
 * Spring Boot
 * Maven
-* H2 (Embedded Database)
+* Docker
 
 ## Usage
 You can interact with the Money Transfer API by sending POST/GET HTTP requests to the provided endpoints.
@@ -28,7 +28,10 @@ A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a 
 Option for optimistic and pessimistic type of locking is also available by sending a POST request to the endpoints "http://localhost:8080/api/transfer/optimistic" and "http://localhost:8080/api/transfer/pessimistic", respectively.
 
 ### GET Requests
+**New feature: Cache for GET requests!**
+
 The endpoint "http://localhost:8080/api/transfer/{transactionId}" is used to retrieve information for a transaction with id equal to {transactionId} (type: UUID).
+The endpoint "http://localhost:8080/api/account/{accountId}" is used to retrieve information for a transaction with id equal to {accountId} (type: UUID).
 
 
 ## Database
@@ -53,43 +56,30 @@ The Transaction entity represents a financial transaction between two accounts a
 | amount           | Amount being transferred              |
 | currency         | Currency of the transaction           |
 
-### Accessing the H2 Console
-To access the H2 console for the MoneyTransfer API, follow these steps:
-1. Start the MoneyTransfer API application.
-2. Open a web browser.
-3. Enter the following URL: "http://localhost:8080/h2-console".
-4. In the login page of the H2 console, configure the following settings:
-   - JDBC URL: `jdbc:h2:mem:testdb`
-   - Username: `sa`
-   - Password: (leave it empty)
-5. Click the "Connect" button to log in to the H2 console.
-
 ## Architecture
-### Presentation Layer
+### Controller/Presentation Layer
 **Controller**: Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
 
 ### Data Transfer Objects (Dtos)
-Classes that are used only as containers e.g., TransferRequestDto.java holds the data that the client sends to the server when requesting a new transfer.
+Container classes, read-only purposes.
 
-### Service
+### Service Package
 Contains the business logic of the application.
 
-### JPA Repositories
-- Provide direct access to the database, as well as CRUD operations.
-- Allow the execution of custom queries.
+### JPA Repositories Package
+- Maps entities to db tables
+- Allows definition of custom queries.
 
-### Entities
-- Represents the data model of the application.
-- Defines the structure and relationships between entities (tables) in the database.
+### Entities Package
+- Describes the data model of the application.
+- Defines the structure and relationships between entities.
 
 ### Exception Package
 - GlobalAPIExceptionHandler.java: @ControllerAdvice enables handling of all different exceptions in the application.
-- Exceptions can be grouped using hierarchy (i.e., all exceptions extend MoneyTransferException.java).
-
-## Unit Tests
-The `TransactionServiceImplTest.java` file located at `src/test/java/com.moneytransfer/service` contains tests for the service implementation, thus external dependencies (e.g. repositories) are mocked.
-
-The unit tests cover the following ACs:
+- Custom exceptions
+ 
+## Service Unit Test
+Contains test methods is defined for the following acceptance criteria:
 - AC 1: Happy path for money transfer between two accounts (results in successful transfer)
 - AC 2: Insufficient balance to process money transfer
 - AC 3: Transfer in the same account
@@ -99,12 +89,8 @@ The unit tests cover the following ACs:
 ## API Documentation
 Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
 
-Or you can view the less-user friendly API documentation in "http://localhost:8080/api/v3/docs".
-
-Note: Spring-boot versions >=3.x.x are NOT compatible Open API v2!
-
-## Containerization
-The app and db are now dockerized! To let the magic happen execute the following command:
+## Dockerization
+The app and db are now dockerized! <3 Let the magic happen by executing the following command:
 ````bash
 docker compose up -- build
 ````
