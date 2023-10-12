@@ -14,14 +14,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
 public class TransactionControllerImpl implements TransactionController {
     private final TransactionService transactionService;
 
-    @Cacheable("transactions")
     @GetMapping("/transfer/{id}")
     public ResponseEntity<GetTransferDto> getTransactionById(@PathVariable UUID id) throws ResourceNotFoundException {
         Transaction transaction = transactionService.getTransactionById(id);
@@ -31,7 +33,6 @@ public class TransactionControllerImpl implements TransactionController {
                 transaction.getTargetAccount().getId(),
                 transaction.getAmount()));
     }
-    @Cacheable("accounts")
     @GetMapping("/account/{id}")
     public ResponseEntity<GetAccountDto> getAccountById(@PathVariable UUID id) throws ResourceNotFoundException {
         Account account = transactionService.getAccountById(id);
@@ -87,4 +88,21 @@ public class TransactionControllerImpl implements TransactionController {
                         transaction.getTargetAccount().getId(),
                         transaction.getAmount()));
     }
+    @Cacheable
+    @GetMapping("/transactions/{minAmount}/{maxAmount}")
+    public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
+            @PathVariable BigDecimal minAmount,
+            @PathVariable BigDecimal maxAmount) throws ResourceNotFoundException {
+        List<Transaction> transactions = transactionService.getTransactionByAmountBetween(minAmount, maxAmount);
+        return ResponseEntity.ok(
+                transactions.stream()
+                        .map(transaction -> new GetTransferDto(
+                                transaction.getId(),
+                                transaction.getSourceAccount().getId(),
+                                transaction.getTargetAccount().getId(),
+                                transaction.getAmount()))
+                        .collect(Collectors.toList())
+        );
+    }
+
 }

@@ -8,6 +8,7 @@ import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public interface TransactionService {
@@ -30,4 +31,6 @@ public interface TransactionService {
     TransactionRequest getOrCreateTransactionRequest(UUID requestId);
 
     Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException;
+    List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
+
 }

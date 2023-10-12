@@ -7,6 +7,8 @@ import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public interface TransactionController {
@@ -19,4 +21,6 @@ public interface TransactionController {
     ResponseEntity<GetTransferDto> transferPessimistic(TransferRequestDto transferRequestDTO) throws MoneyTransferException;
 
     ResponseEntity<GetTransferDto> transfer(TransferRequestDto transferRequestDTO, UUID requestId) throws MoneyTransferException;
+    ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
+
 }

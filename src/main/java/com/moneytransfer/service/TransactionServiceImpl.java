@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -133,6 +134,13 @@ public class TransactionServiceImpl implements TransactionService {
         return accountRepository.findById(id)
                 .orElseThrow(() -> {
                     String errorMessage = "Account with ID: " + id + " was not found.";
+                    return new ResourceNotFoundException(errorMessage);
+                });
+    }
+    public List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException {
+        return transactionRepository.findByAmountBetween(minAmount, maxAmount)
+                .orElseThrow(() -> {
+                    String errorMessage = "Transactions within the specified range: [" +minAmount+","+maxAmount + "] were not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
