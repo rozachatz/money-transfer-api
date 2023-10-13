@@ -6,6 +6,7 @@ import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.entity.TransactionRequest;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
+import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,15 +23,11 @@ public interface TransactionService {
 
     TransferAccountsDto getAccountsByIdsOptimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException;
 
-    TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException;
-
     Transaction getTransactionById(UUID id) throws ResourceNotFoundException;
 
     Account getAccountById(UUID id) throws ResourceNotFoundException;
 
-    TransactionRequest getOrCreateTransactionRequest(UUID requestId);
-
     Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException;
     List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
-
+     Page<Account> getAllAccounts();
 }

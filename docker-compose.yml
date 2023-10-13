@@ -14,12 +14,11 @@ services:
       - '5432:5432'
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
-      # copy the sql script to create tables
       - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
   app:
     build:
-      context: .  # Use the current directory as the build context
-      dockerfile: Dockerfile  # Specify the Dockerfile to use
+      context: .
+      dockerfile: Dockerfile
     image: money-transfer-app
     ports:
       - '8080:8080'

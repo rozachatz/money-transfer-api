@@ -10,6 +10,7 @@ import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransactionControllerImpl implements TransactionController {
     private final TransactionService transactionService;
-
+    @Cacheable
+    @GetMapping("/transactions/{minAmount}/{maxAmount}")
+    public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
+            @PathVariable BigDecimal minAmount,
+            @PathVariable BigDecimal maxAmount) throws ResourceNotFoundException {
+        List<Transaction> transactions = transactionService.getTransactionByAmountBetween(minAmount, maxAmount);
+        return ResponseEntity.ok(
+                transactions.stream()
+                        .map(transaction -> new GetTransferDto(
+                                transaction.getId(),
+                                transaction.getSourceAccount().getId(),
+                                transaction.getTargetAccount().getId(),
+                                transaction.getAmount()))
+                        .collect(Collectors.toList())
+        );
+    }
+    @Cacheable
+    @GetMapping("/accounts")
+    public ResponseEntity<Page<Account>> getAllAccounts() {
+        Page<Account> entities = transactionService.getAllAccounts();
+        return ResponseEntity.ok(entities);
+    }
     @GetMapping("/transfer/{id}")
     public ResponseEntity<GetTransferDto> getTransactionById(@PathVariable UUID id) throws ResourceNotFoundException {
         Transaction transaction = transactionService.getTransactionById(id);
@@ -88,21 +110,6 @@ public class TransactionControllerImpl implements TransactionController {
                         transaction.getTargetAccount().getId(),
                         transaction.getAmount()));
     }
-    @Cacheable
-    @GetMapping("/transactions/{minAmount}/{maxAmount}")
-    public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
-            @PathVariable BigDecimal minAmount,
-            @PathVariable BigDecimal maxAmount) throws ResourceNotFoundException {
-        List<Transaction> transactions = transactionService.getTransactionByAmountBetween(minAmount, maxAmount);
-        return ResponseEntity.ok(
-                transactions.stream()
-                        .map(transaction -> new GetTransferDto(
-                                transaction.getId(),
-                                transaction.getSourceAccount().getId(),
-                                transaction.getTargetAccount().getId(),
-                                transaction.getAmount()))
-                        .collect(Collectors.toList())
-        );
-    }
+
 
 }
