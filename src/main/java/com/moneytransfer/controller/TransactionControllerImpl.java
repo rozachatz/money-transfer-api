@@ -7,6 +7,7 @@ import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
+import com.moneytransfer.service.TransactionRequestService;
 import com.moneytransfer.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransactionControllerImpl implements TransactionController {
     private final TransactionService transactionService;
+    private final TransactionRequestService transactionRequestService;
     @Cacheable
     @GetMapping("/transactions/{minAmount}/{maxAmount}")
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
@@ -67,7 +69,7 @@ public class TransactionControllerImpl implements TransactionController {
 
     @PostMapping("/transfer/{requestId}")
     public ResponseEntity<GetTransferDto> transfer(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
-        Transaction transaction = transactionService.processRequest(
+        Transaction transaction = transactionRequestService.processRequest(
                 transferRequestDto.sourceAccountId(),
                 transferRequestDto.targetAccountId(),
                 transferRequestDto.amount(),
