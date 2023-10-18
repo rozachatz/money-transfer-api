@@ -1,106 +1,77 @@
 package com.moneytransfer.service;
-
-import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
-import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.exceptions.SameAccountException;
 import com.moneytransfer.repository.AccountRepository;
-import com.moneytransfer.repository.TransactionRepository;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-@MockitoSettings
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+@Ignore
+@SpringBootTest
 public class TransactionServiceImplTest {
-    /*
-    @Mock
-    private AccountRepository accountRepository;
-    @Mock
-    private TransactionRepository transactionRepository;
-    @InjectMocks
+    @Autowired
     private TransactionServiceImpl transactionServiceImpl;
+    @Autowired
+    private AccountRepository accountRepository;
+
     private Account sourceAccount;
+    private Account targetAccount;
 
     @BeforeEach
     public void setup() {
-        sourceAccount = new Account(0, UUID.randomUUID(), BigDecimal.ONE, Currency.EUR, LocalDateTime.now());
+        List<Account> accounts = transactionServiceImpl.getAccountsWithLimit(2).getContent();
+        sourceAccount = accounts.get(0);
+        targetAccount = accounts.get(1);
     }
-    @Ignore
+
     @Test
+    @Sql("classpath:data.sql")
     public void testHappyPath() {
-        Account targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now());
-
-        TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
-        Mockito.when(transferAccountsDto.getTargetAccount()).thenReturn(targetAccount);
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), targetAccount.getId()))
-                .thenReturn(Optional.of(transferAccountsDto));
-
         Assertions.assertDoesNotThrow(() ->
                 transactionServiceImpl.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE)
         );
         assertEquals(BigDecimal.ZERO, sourceAccount.getBalance());
         assertEquals(BigDecimal.ONE, targetAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.times(1)).save(ArgumentMatchers.any(Transaction.class));
     }
-    @Ignore
+
     @Test
     public void testInsufficientBalance() {
-        Account targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now());
-
-        TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), targetAccount.getId()))
-                .thenReturn(Optional.of(transferAccountsDto));
-
+        targetAccount.setBalance(BigDecimal.ZERO);
         assertThrows(InsufficientBalanceException.class, () ->
                 transactionServiceImpl.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN)
         );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
         assertEquals(BigDecimal.ZERO, targetAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
     }
-    @Ignore
+
     @Test
     public void testTransferSameAccount() {
-        TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), sourceAccount.getId()))
-                .thenReturn(Optional.of(transferAccountsDto));
-
         assertThrows(SameAccountException.class, () ->
                 transactionServiceImpl.transferOptimistic(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE)
         );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
     }
-    @Ignore
+
     @Test
     public void testAccountNotFound() {
         UUID nonExistingAccountId = UUID.randomUUID();
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), nonExistingAccountId))
-                .thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> transactionServiceImpl.transferOptimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));
+        assertThrows(ResourceNotFoundException.class, () ->
+                transactionServiceImpl.transferOptimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE)
+        );
         assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
     }
-*/
+
 
 }

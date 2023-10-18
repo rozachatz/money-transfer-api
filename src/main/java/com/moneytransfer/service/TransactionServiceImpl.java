@@ -38,10 +38,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * Gets all the bank accounts
-     * @return all accounts (limit:1000)
+     * @return all accounts with limit
      */
-    public Page<Account> getAllAccounts() {
-        PageRequest pageRequest = PageRequest.of(0, 1000);
+    public Page<Account> getAccountsWithLimit(int limit) {
+        PageRequest pageRequest = PageRequest.of(0, limit);
         return accountRepository.findAll(pageRequest);
     }
     /**

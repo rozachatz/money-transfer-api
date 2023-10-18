@@ -43,9 +43,9 @@ public class TransactionControllerImpl implements TransactionController {
         );
     }
     @Cacheable
-    @GetMapping("/accounts")
-    public ResponseEntity<Page<Account>> getAllAccounts() {
-        Page<Account> entities = transactionService.getAllAccounts();
+    @GetMapping("/accounts/{limit}")
+    public ResponseEntity<Page<Account>> getAccountsWithLimit(@PathVariable int limit) {
+        Page<Account> entities = transactionService.getAccountsWithLimit(limit);
         return ResponseEntity.ok(entities);
     }
     @GetMapping("/transfer/{id}")

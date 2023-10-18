@@ -26,7 +26,7 @@ public interface TransactionService {
     Account getAccountById(UUID id) throws ResourceNotFoundException;
 
     List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
-    Page<Account> getAllAccounts();
+    Page<Account> getAccountsWithLimit(int limit);
     Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException;
     TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException;
 
