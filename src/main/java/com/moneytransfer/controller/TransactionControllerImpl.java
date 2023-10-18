@@ -26,6 +26,14 @@ import java.util.stream.Collectors;
 public class TransactionControllerImpl implements TransactionController {
     private final TransactionService transactionService;
     private final TransactionRequestService transactionRequestService;
+
+    /**
+     * Get all transactions with amount withing range
+     * @param minAmount
+     * @param maxAmount
+     * @return A list of GetTransferDto Objects
+     * @throws ResourceNotFoundException
+     */
     @Cacheable
     @GetMapping("/transactions/{minAmount}/{maxAmount}")
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
@@ -42,21 +50,25 @@ public class TransactionControllerImpl implements TransactionController {
                         .collect(Collectors.toList())
         );
     }
+
+    /**
+     * Return all accounts with #results<limit
+     * @param limit
+     * @return List of Account Objects
+     */
     @Cacheable
-    @GetMapping("/accounts/{limit}")
+    @GetMapping("/accounts/{limit}") //TODO: Return Account DTO
     public ResponseEntity<Page<Account>> getAccountsWithLimit(@PathVariable int limit) {
         Page<Account> entities = transactionService.getAccountsWithLimit(limit);
         return ResponseEntity.ok(entities);
     }
-    @GetMapping("/transfer/{id}")
-    public ResponseEntity<GetTransferDto> getTransactionById(@PathVariable UUID id) throws ResourceNotFoundException {
-        Transaction transaction = transactionService.getTransactionById(id);
-        return ResponseEntity.ok(new GetTransferDto(
-                transaction.getId(),
-                transaction.getSourceAccount().getId(),
-                transaction.getTargetAccount().getId(),
-                transaction.getAmount()));
-    }
+
+    /**
+     * Get Account by id
+     * @param id
+     * @return associated Account
+     * @throws ResourceNotFoundException
+     */
     @GetMapping("/account/{id}")
     public ResponseEntity<GetAccountDto> getAccountById(@PathVariable UUID id) throws ResourceNotFoundException {
         Account account = transactionService.getAccountById(id);
@@ -67,21 +79,30 @@ public class TransactionControllerImpl implements TransactionController {
                 account.getCreatedAt()));
     }
 
-    @PostMapping("/transfer/{requestId}")
-    public ResponseEntity<GetTransferDto> transfer(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
-        Transaction transaction = transactionRequestService.processRequest(
-                transferRequestDto.sourceAccountId(),
-                transferRequestDto.targetAccountId(),
-                transferRequestDto.amount(),
-                requestId);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(new GetTransferDto(
-                        transaction.getId(),
-                        transaction.getSourceAccount().getId(),
-                        transaction.getTargetAccount().getId(),
-                        transaction.getAmount()));
+    /**
+     * Get Transaction by id
+     * @param id
+     * @return GetTransferDto for the associated Transaction
+     * @throws ResourceNotFoundException
+     */
+    @GetMapping("/transfer/{id}")
+    public ResponseEntity<GetTransferDto> getTransactionById(@PathVariable UUID id) throws ResourceNotFoundException {
+        Transaction transaction = transactionService.getTransactionById(id);
+        return ResponseEntity.ok(new GetTransferDto(
+                transaction.getId(),
+                transaction.getSourceAccount().getId(),
+                transaction.getTargetAccount().getId(),
+                transaction.getAmount()));
     }
+
+
+
+    /**
+     * New transfer request, optimistic locking
+     * @param transferRequestDTO
+     * @return GetTransferDto for the new Transaction
+     * @throws MoneyTransferException
+     */
 
     @PostMapping("/transfer/optimistic")
     public ResponseEntity<GetTransferDto> transferOptimistic(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
@@ -98,12 +119,42 @@ public class TransactionControllerImpl implements TransactionController {
                         transaction.getAmount()));
     }
 
+    /**
+     * New transfer request, pessimistic locking
+     * @param transferRequestDTO
+     * @return GetTransferDto for the new Transaction
+     * @throws MoneyTransferException
+     */
     @PostMapping("/transfer/pessimistic")
     public ResponseEntity<GetTransferDto> transferPessimistic(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
         Transaction transaction = transactionService.transferPessimistic(
                 transferRequestDTO.sourceAccountId(),
                 transferRequestDTO.targetAccountId(),
                 transferRequestDTO.amount());
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new GetTransferDto(
+                        transaction.getId(),
+                        transaction.getSourceAccount().getId(),
+                        transaction.getTargetAccount().getId(),
+                        transaction.getAmount()));
+    }
+
+
+    /**
+     * New IDEMPOTENT tranfer request //TODO: Fix, buggy
+     * @param transferRequestDto
+     * @param requestId
+     * @return
+     * @throws MoneyTransferException
+     */
+    @PostMapping("/transfer/{requestId}")
+    public ResponseEntity<GetTransferDto> transfer(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
+        Transaction transaction = transactionRequestService.processRequest(
+                transferRequestDto.sourceAccountId(),
+                transferRequestDto.targetAccountId(),
+                transferRequestDto.amount(),
+                requestId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
