@@ -1,12 +1,10 @@
 package com.moneytransfer.service;
 
-import com.moneytransfer.MoneyTransferApplication;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.exceptions.SameAccountException;
-import com.moneytransfer.repository.AccountRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,17 +18,13 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
-
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
-@SpringBootTest(classes = MoneyTransferApplication.class)
+@SpringBootTest
 public class TransactionServiceImplTest {
 
     @Autowired
     private TransactionServiceImpl transactionService;
-
-    @Autowired
-    private AccountRepository accountRepository;
     private Account sourceAccount, targetAccount;
 
     @Before
@@ -73,9 +67,7 @@ public class TransactionServiceImplTest {
         assertAccountBalance(sourceAccount, expectedBalance);
     }
 
-    private void assertAccountBalance(Account account, BigDecimal expectedBalance) {
-        assertEquals(expectedBalance, accountRepository.findById((account.getId()))
-                .map(Account::getBalance)
-                .orElse(BigDecimal.valueOf(-1))); //balance can never be negative
+    private void assertAccountBalance(Account account, BigDecimal expectedBalance) throws ResourceNotFoundException {
+        assertEquals(expectedBalance, transactionService.getAccountById(account.getId()).getBalance());
     }
 }

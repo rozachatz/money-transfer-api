@@ -1,6 +1,5 @@
 package com.moneytransfer.repository;
 
-import com.moneytransfer.MoneyTransferApplication;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.enums.Currency;
 import org.junit.jupiter.api.Assertions;
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ActiveProfiles("test")
-@SpringBootTest(classes = MoneyTransferApplication.class)
+@SpringBootTest
 public class AccountRepositoryTest {
 
     @Autowired
