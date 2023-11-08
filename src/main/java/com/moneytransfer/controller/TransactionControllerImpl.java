@@ -75,8 +75,7 @@ public class TransactionControllerImpl implements TransactionController {
         return ResponseEntity.ok(new GetAccountDto(
                 account.getId(),
                 account.getBalance(),
-                account.getCurrency(),
-                account.getCreatedAt()));
+                account.getCurrency()));
     }
 
     /**

@@ -1,77 +1,81 @@
 package com.moneytransfer.service;
+
+import com.moneytransfer.MoneyTransferApplication;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
+import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.exceptions.SameAccountException;
 import com.moneytransfer.repository.AccountRepository;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-@Ignore
-@SpringBootTest
+
+
+@RunWith(SpringRunner.class)
+@ActiveProfiles("test")
+@SpringBootTest(classes = MoneyTransferApplication.class)
 public class TransactionServiceImplTest {
+
     @Autowired
-    private TransactionServiceImpl transactionServiceImpl;
+    private TransactionServiceImpl transactionService;
+
     @Autowired
     private AccountRepository accountRepository;
+    private Account sourceAccount, targetAccount;
 
-    private Account sourceAccount;
-    private Account targetAccount;
-
-    @BeforeEach
-    public void setup() {
-        List<Account> accounts = transactionServiceImpl.getAccountsWithLimit(2).getContent();
-        sourceAccount = accounts.get(0);
-        targetAccount = accounts.get(1);
+    @Before
+    public void setup() throws ResourceNotFoundException {
+        sourceAccount = transactionService.getAccountById(UUID.fromString("6a7d71f0-6f12-45a6-91a1-198272a09fe8"));
+        targetAccount = transactionService.getAccountById(UUID.fromString("e4c6f84c-8f92-4f2b-90bb-4352e9379bca"));
     }
 
     @Test
-    @Sql("classpath:data.sql")
-    public void testHappyPath() {
-        Assertions.assertDoesNotThrow(() ->
-                transactionServiceImpl.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE)
-        );
-        assertEquals(BigDecimal.ZERO, sourceAccount.getBalance());
-        assertEquals(BigDecimal.ONE, targetAccount.getBalance());
+    public void testHappyPath() throws MoneyTransferException {
+        BigDecimal amount = BigDecimal.valueOf(1);
+        BigDecimal expectedSourceBalance = sourceAccount.getBalance().subtract(amount);
+        BigDecimal expectedTargetBalance = targetAccount.getBalance().add(amount);
+        transactionService.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), amount);
+        assertAccountBalance(sourceAccount, expectedSourceBalance);
+        assertAccountBalance(targetAccount, expectedTargetBalance);
     }
 
-    @Test
-    public void testInsufficientBalance() {
-        targetAccount.setBalance(BigDecimal.ZERO);
-        assertThrows(InsufficientBalanceException.class, () ->
-                transactionServiceImpl.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN)
-        );
-        assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
-        assertEquals(BigDecimal.ZERO, targetAccount.getBalance());
+    @Test(expected = InsufficientBalanceException.class)
+    public void testInsufficientBalance() throws MoneyTransferException {
+        BigDecimal expectedSourceBalance = sourceAccount.getBalance();
+        BigDecimal expectedTargetBalance = targetAccount.getBalance();
+        transactionService.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.valueOf(100));
+        assertAccountBalance(sourceAccount, expectedSourceBalance);
+        assertAccountBalance(targetAccount, expectedTargetBalance);
     }
 
-    @Test
-    public void testTransferSameAccount() {
-        assertThrows(SameAccountException.class, () ->
-                transactionServiceImpl.transferOptimistic(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE)
-        );
-        assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
+    @Test(expected = SameAccountException.class)
+    public void testTransferSameAccount() throws MoneyTransferException {
+        BigDecimal expectedBalance = sourceAccount.getBalance();
+        transactionService.transferOptimistic(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE);
+        assertAccountBalance(sourceAccount, expectedBalance);
     }
 
-    @Test
-    public void testAccountNotFound() {
+    @Test(expected = ResourceNotFoundException.class)
+    public void testAccountNotFound() throws MoneyTransferException {
         UUID nonExistingAccountId = UUID.randomUUID();
-        assertThrows(ResourceNotFoundException.class, () ->
-                transactionServiceImpl.transferOptimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE)
-        );
-        assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
+        BigDecimal expectedBalance = sourceAccount.getBalance();
+        transactionService.transferOptimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE);
+        assertAccountBalance(sourceAccount, expectedBalance);
     }
 
-
+    private void assertAccountBalance(Account account, BigDecimal expectedBalance) {
+        assertEquals(expectedBalance, accountRepository.findById((account.getId()))
+                .map(Account::getBalance)
+                .orElse(BigDecimal.valueOf(-1))); //balance can never be negative
+    }
 }
