@@ -199,13 +199,13 @@ public class TransactionControllerImpl implements TransactionController {
 
 
     /**
-     * New IDEMPOTENT tranfer request //TODO: Fix, buggy
+     * New IDEMPOTENT tranfer request
      * @param transferRequestDto
      * @param requestId
      * @return
      * @throws MoneyTransferException
      */
-    @Operation(summary = "Idempotent POST request for a Transaction, given the transactionRequestId. (NEEDS FIXING)")
+    @Operation(summary = "Idempotent POST request for a Transaction, given the transactionRequestId.")
     @ApiResponses(
             value = {
                     @ApiResponse(responseCode = "201", description = "The (successful) Transaction associated with this request.",
@@ -222,7 +222,7 @@ public class TransactionControllerImpl implements TransactionController {
 
             })
     @PostMapping("/transfer/{requestId}")
-    public ResponseEntity<GetTransferDto> transfer(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
+    public ResponseEntity<GetTransferDto> transferRequestSerializable(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
         Transaction transaction = transactionRequestService.processRequest(
                 transferRequestDto.sourceAccountId(),
                 transferRequestDto.targetAccountId(),

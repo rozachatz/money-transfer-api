@@ -23,7 +23,7 @@ public interface TransactionController {
 
     ResponseEntity<GetTransferDto> transferPessimistic(TransferRequestDto transferRequestDTO) throws MoneyTransferException;
 
-    ResponseEntity<GetTransferDto> transfer(TransferRequestDto transferRequestDTO, UUID requestId) throws MoneyTransferException;
+    ResponseEntity<GetTransferDto> transferRequestSerializable(TransferRequestDto transferRequestDTO, UUID requestId) throws MoneyTransferException;
     ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
     ResponseEntity<List<GetAccountDto>> getAccountsWithLimit(int limit);
 

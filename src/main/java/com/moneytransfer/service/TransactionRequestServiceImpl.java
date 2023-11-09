@@ -59,7 +59,7 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
      */
     private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, String JsonBody) throws MoneyTransferException {
         try {
-            Transaction transaction = transactionService.transfer(sourceAccountId, targetAccountId, amount);
+            Transaction transaction = transactionService.transferSerializable(sourceAccountId, targetAccountId, amount);
             transactionRequest.setTransaction(transaction);
             transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
             return transaction;

@@ -1,13 +1,9 @@
 package com.moneytransfer.service;
 
-import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.TransactionRequest;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
-import com.moneytransfer.exceptions.ResourceNotFoundException;
-import com.moneytransfer.exceptions.SameAccountException;
 import com.moneytransfer.repository.TransactionRequestRepository;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
@@ -20,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @RunWith(SpringRunner.class)
@@ -38,7 +33,7 @@ public class TransactionRequestServiceImplTest {
     public void testExecute_Fail() throws MoneyTransferException {
         BigDecimal amount = BigDecimal.valueOf(1000000000);
         UUID transactionRequestId = UUID.randomUUID();
-        transactionRequestServiceImpl.processRequest(id1,id2,amount,transactionRequestId );
+        transactionRequestServiceImpl.processRequest(id1,id2,amount,transactionRequestId);
         Optional< TransactionRequest> retrievedTransactionRequest = transactionRequestRepository.findById(transactionRequestId);
         assertNotNull(retrievedTransactionRequest);
         Assertions.assertTrue(retrievedTransactionRequest.isPresent());
@@ -53,7 +48,7 @@ public class TransactionRequestServiceImplTest {
         BigDecimal amount = BigDecimal.valueOf(1);
         UUID transactionRequestId = UUID.randomUUID();
         transactionRequestServiceImpl.processRequest(id1, id2, amount, transactionRequestId );
-        Optional< TransactionRequest> retrievedTransactionRequest = transactionRequestRepository.findById(transactionRequestId);
+        Optional<TransactionRequest> retrievedTransactionRequest = transactionRequestRepository.findById(transactionRequestId);
         assertNotNull(retrievedTransactionRequest);
         Assertions.assertTrue(retrievedTransactionRequest.isPresent());
         TransactionRequest transactionRequest = retrievedTransactionRequest.get();

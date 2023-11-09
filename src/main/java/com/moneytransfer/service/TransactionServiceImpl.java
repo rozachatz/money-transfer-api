@@ -97,6 +97,7 @@ public class TransactionServiceImpl implements TransactionService {
      * @return a new Transaction
      * @throws MoneyTransferException
      */
+    @Transactional
     public Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
         Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
@@ -141,19 +142,7 @@ public class TransactionServiceImpl implements TransactionService {
                 });
     }
 
-    /**
-     * New Transaction with pessimistic locking for Accounts
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @return a new Transaction
-     * @throws MoneyTransferException
-     */
-    @Transactional
-    public Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
-        return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
-    }
+
     /**
      *
      * @param sourceAccountId
@@ -183,6 +172,20 @@ public class TransactionServiceImpl implements TransactionService {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
     }
+
+    /**
+     * New Transaction with pessimistic locking for Accounts
+     * @param sourceAccountId
+     * @param targetAccountId
+     * @param amount
+     * @return a new Transaction
+     * @throws MoneyTransferException
+     */
+    @Transactional
+    public Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
+        return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
+    }
     /**
      *
      * @param sourceAccountId
@@ -191,8 +194,8 @@ public class TransactionServiceImpl implements TransactionService {
      * @return a new Transaction
      * @throws MoneyTransferException
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
-    public Transaction transfer(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Transaction transferSerializable(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
     }
@@ -210,6 +213,4 @@ public class TransactionServiceImpl implements TransactionService {
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
-
-
 }
