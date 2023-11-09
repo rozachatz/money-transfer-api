@@ -25,6 +25,6 @@ public interface TransactionController {
 
     ResponseEntity<GetTransferDto> transfer(TransferRequestDto transferRequestDTO, UUID requestId) throws MoneyTransferException;
     ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
-    ResponseEntity<Page<Account>> getAccountsWithLimit(int limit);
+    ResponseEntity<List<GetAccountDto>> getAccountsWithLimit(int limit);
 
 }
