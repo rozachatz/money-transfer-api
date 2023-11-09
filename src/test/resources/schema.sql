@@ -26,11 +26,11 @@ REFERENCES accounts(id);
 
 
 CREATE TABLE transaction_requests (
-    requestId UUID PRIMARY KEY,
+    REQUEST_ID UUID PRIMARY KEY,
     transaction_id UUID,
-    requestStatus VARCHAR(255),
-    jsonBody TEXT,
-    errorMessage TEXT
+    REQUEST_STATUS VARCHAR(255),
+    JSON_BODY TEXT,
+    ERROR_MESSAGE TEXT
 );
 
 ALTER TABLE transaction_requests

@@ -1,5 +1,3 @@
-
-
 -- Insert new account 1
 INSERT INTO accounts (id, balance, currency, version, CREATED_AT)
 VALUES ('e4c6f84c-8f92-4f2b-90bb-4352e9379bca', 10.00, 'EUR', 0, CURRENT_TIMESTAMP);

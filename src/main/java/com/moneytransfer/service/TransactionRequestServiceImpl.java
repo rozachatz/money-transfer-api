@@ -1,6 +1,5 @@
 package com.moneytransfer.service;
 
-import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.entity.TransactionRequest;
 import com.moneytransfer.enums.RequestStatus;
@@ -30,23 +29,51 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
      * @return the Transaction associated with the TransactionRequest
      * @throws MoneyTransferException
      */
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
         String JsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
         return switch (transactionRequest.getRequestStatus()) {
-            case SUCCESS -> {
+            case SUCCESS -> { //transaction was successfully completed
                 validateJson(transactionRequest, JsonBody);
                 yield transactionRequest.getTransaction();
             }
             case IN_PROGRESS ->
                     processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount, JsonBody);
-            case FAILED -> {
+            case FAILED -> { //transaction failed
                 validateJson(transactionRequest, JsonBody);
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
             }
         };
     }
+
+    /**
+     *
+     * @param transactionRequest
+     * @param sourceAccountId
+     * @param targetAccountId
+     * @param amount
+     * @param JsonBody
+     * @return a new Transaction associated with the TransactionRequest
+     * @throws MoneyTransferException
+     */
+    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, String JsonBody) throws MoneyTransferException {
+        try {
+            Transaction transaction = transactionService.transfer(sourceAccountId, targetAccountId, amount);
+            transactionRequest.setTransaction(transaction);
+            transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
+            return transaction;
+        } catch (MoneyTransferException | RuntimeException e) { //checked or unchecked (rollback)
+            transactionRequest.setErrorMessage(e.getMessage());
+            transactionRequest.setRequestStatus(RequestStatus.FAILED);
+            throw e;
+        } finally {
+            transactionRequest.setJsonBody(JsonBody);
+            transactionRequestRepository.save(transactionRequest);
+        }
+    }
+
+
     /**
      * Gets or creates a Transaction request
      * @return the Transaction request
@@ -79,61 +106,4 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
         }
     }
 
-    /**
-     *
-     * @param transactionRequest
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @param JsonBody
-     * @return a new Transaction associated with the TransactionRequest
-     * @throws MoneyTransferException
-     */
-    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, String JsonBody) throws MoneyTransferException {
-        try {
-            Transaction transaction = transfer(sourceAccountId, targetAccountId, amount);
-            updateTransactionRequestOnSuccess(transactionRequest, transaction);
-            return transaction;
-        } catch (MoneyTransferException | RuntimeException e) { //checked or unchecked (rollback)
-            updateTransactionRequestOnFailure(transactionRequest, e.getMessage());
-            throw e;
-        } finally {
-            transactionRequest.setJsonBody(JsonBody);
-            transactionRequestRepository.save(transactionRequest);
-        }
-    }
-
-    /**
-     *
-     * @param transactionRequest
-     * @param errorMessage
-     */
-    private void updateTransactionRequestOnFailure(TransactionRequest transactionRequest, String errorMessage) {
-        transactionRequest.setRequestStatus(RequestStatus.FAILED);
-        transactionRequest.setErrorMessage(errorMessage);
-    }
-
-    /**
-     *
-     * @param transactionRequest
-     * @param transaction
-     */
-    private void updateTransactionRequestOnSuccess(TransactionRequest transactionRequest, Transaction transaction) {
-        transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
-        transactionRequest.setTransaction(transaction);
-    }
-
-    /**
-     *
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @return a new Transaction
-     * @throws MoneyTransferException
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
-    public Transaction transfer(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = transactionService.getAccountsByIds(sourceAccountId, targetAccountId);
-        return transactionService.initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
-    }
 }

@@ -208,7 +208,7 @@ public class TransactionControllerImpl implements TransactionController {
     @Operation(summary = "Idempotent POST request for a Transaction, given the transactionRequestId. (NEEDS FIXING)")
     @ApiResponses(
             value = {
-                    @ApiResponse(responseCode = "201", description = "Transaction was successfully completed!",
+                    @ApiResponse(responseCode = "201", description = "The (successful) Transaction associated with this request.",
                             content = {@Content(mediaType = "application/json",
                                     schema = @Schema(implementation = GetTransferDto.class))}),
                     @ApiResponse(responseCode = "404", description = "Source/target account was not found!",
@@ -217,7 +217,7 @@ public class TransactionControllerImpl implements TransactionController {
                             content = @Content),
                     @ApiResponse(responseCode = "400", description = "Transactions within the same account are not allowed.",
                             content = @Content),
-                    @ApiResponse(responseCode = "409", description = "Conflict with already existing Transaction Request.",
+                    @ApiResponse(responseCode = "409", description = "Transaction request has FAILED and a TransactionRequest conflict is detected (i.e., this is not the first time this request is performed).",
                             content = @Content)
 
             })

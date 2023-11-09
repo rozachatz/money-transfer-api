@@ -183,7 +183,19 @@ public class TransactionServiceImpl implements TransactionService {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
     }
-
+    /**
+     *
+     * @param sourceAccountId
+     * @param targetAccountId
+     * @param amount
+     * @return a new Transaction
+     * @throws MoneyTransferException
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
+    public Transaction transfer(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
+        return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
+    }
     /**
      *
      * @param sourceAccountId
