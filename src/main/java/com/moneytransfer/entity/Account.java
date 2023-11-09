@@ -27,7 +27,6 @@ public class Account {
     @Enumerated(EnumType.STRING)
     private Currency currency;
     private LocalDateTime createdAt;
-
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
     }

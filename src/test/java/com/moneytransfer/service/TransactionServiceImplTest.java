@@ -1,104 +1,73 @@
 package com.moneytransfer.service;
 
-import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
-import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
+import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.exceptions.SameAccountException;
-import com.moneytransfer.repository.AccountRepository;
-import com.moneytransfer.repository.TransactionRepository;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.Assert.assertEquals;
 
-@MockitoSettings
+@RunWith(SpringRunner.class)
+@ActiveProfiles("test")
+@SpringBootTest
 public class TransactionServiceImplTest {
-    @Mock
-    private AccountRepository accountRepository;
-    @Mock
-    private TransactionRepository transactionRepository;
-    @InjectMocks
-    private TransactionServiceImpl transactionServiceImpl;
-    private Account sourceAccount;
 
-    @BeforeEach
-    public void setup() {
-        sourceAccount = new Account(0, UUID.randomUUID(), BigDecimal.ONE, Currency.EUR, LocalDateTime.now());
+    @Autowired
+    private TransactionServiceImpl transactionService;
+    private Account sourceAccount, targetAccount;
+
+    @Before
+    public void setup() throws ResourceNotFoundException {
+        sourceAccount = transactionService.getAccountById(UUID.fromString("6a7d71f0-6f12-45a6-91a1-198272a09fe8"));
+        targetAccount = transactionService.getAccountById(UUID.fromString("e4c6f84c-8f92-4f2b-90bb-4352e9379bca"));
     }
 
     @Test
-    public void testHappyPath() {
-        Account targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now());
-
-        TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
-        Mockito.when(transferAccountsDto.getTargetAccount()).thenReturn(targetAccount);
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), targetAccount.getId()))
-                .thenReturn(Optional.of(transferAccountsDto));
-
-        Assertions.assertDoesNotThrow(() ->
-                transactionServiceImpl.transfer(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ONE)
-        );
-        assertEquals(BigDecimal.ZERO, sourceAccount.getBalance());
-        assertEquals(BigDecimal.ONE, targetAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.times(1)).save(ArgumentMatchers.any(Transaction.class));
+    public void testHappyPath() throws MoneyTransferException {
+        BigDecimal amount = BigDecimal.valueOf(1);
+        BigDecimal expectedSourceBalance = sourceAccount.getBalance().subtract(amount);
+        BigDecimal expectedTargetBalance = targetAccount.getBalance().add(amount);
+        transactionService.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), amount);
+        assertAccountBalance(sourceAccount, expectedSourceBalance);
+        assertAccountBalance(targetAccount, expectedTargetBalance);
     }
 
-    @Test
-    public void testInsufficientBalance() {
-        Account targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.ZERO, Currency.EUR, LocalDateTime.now());
-
-        TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(transferAccountsDto.getSourceAccount()).thenReturn(sourceAccount);
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), targetAccount.getId()))
-                .thenReturn(Optional.of(transferAccountsDto));
-
-        assertThrows(InsufficientBalanceException.class, () ->
-                transactionServiceImpl.transfer(sourceAccount.getId(), targetAccount.getId(), BigDecimal.TEN)
-        );
-        assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
-        assertEquals(BigDecimal.ZERO, targetAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
+    @Test(expected = InsufficientBalanceException.class)
+    public void testInsufficientBalance() throws MoneyTransferException {
+        BigDecimal expectedSourceBalance = sourceAccount.getBalance();
+        BigDecimal expectedTargetBalance = targetAccount.getBalance();
+        transactionService.transferOptimistic(sourceAccount.getId(), targetAccount.getId(), BigDecimal.valueOf(100));
+        assertAccountBalance(sourceAccount, expectedSourceBalance);
+        assertAccountBalance(targetAccount, expectedTargetBalance);
     }
 
-    @Test
-    public void testTransferSameAccount() {
-        TransferAccountsDto transferAccountsDto = Mockito.mock(TransferAccountsDto.class);
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), sourceAccount.getId()))
-                .thenReturn(Optional.of(transferAccountsDto));
-
-        assertThrows(SameAccountException.class, () ->
-                transactionServiceImpl.transfer(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE)
-        );
-        assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
+    @Test(expected = SameAccountException.class)
+    public void testTransferSameAccount() throws MoneyTransferException {
+        BigDecimal expectedBalance = sourceAccount.getBalance();
+        transactionService.transferOptimistic(sourceAccount.getId(), sourceAccount.getId(), BigDecimal.ONE);
+        assertAccountBalance(sourceAccount, expectedBalance);
     }
 
-    @Test
-    public void testAccountNotFound() {
+    @Test(expected = ResourceNotFoundException.class)
+    public void testAccountNotFound() throws MoneyTransferException {
         UUID nonExistingAccountId = UUID.randomUUID();
-        Mockito.when(accountRepository.findByIds(sourceAccount.getId(), nonExistingAccountId))
-                .thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> transactionServiceImpl.transfer(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE));
-        assertEquals(BigDecimal.ONE, sourceAccount.getBalance());
-        Mockito.verify(transactionRepository, Mockito.never()).save(ArgumentMatchers.any(Transaction.class));
+        BigDecimal expectedBalance = sourceAccount.getBalance();
+        transactionService.transferOptimistic(sourceAccount.getId(), nonExistingAccountId, BigDecimal.ONE);
+        assertAccountBalance(sourceAccount, expectedBalance);
     }
 
-
+    private void assertAccountBalance(Account account, BigDecimal expectedBalance) throws ResourceNotFoundException {
+        assertEquals(expectedBalance, transactionService.getAccountById(account.getId()).getBalance());
+    }
 }

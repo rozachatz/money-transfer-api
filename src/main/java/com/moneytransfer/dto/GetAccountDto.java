@@ -14,7 +14,6 @@ public class GetAccountDto {
     private UUID accountId;
     private BigDecimal balance;
     private Currency currency;
-    private LocalDateTime createdAt;
 }
 
 
