@@ -5,9 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Dto for {@link com.moneytransfer.entity.Account}
+ */
 @Getter
 @AllArgsConstructor
 public class GetAccountDto {

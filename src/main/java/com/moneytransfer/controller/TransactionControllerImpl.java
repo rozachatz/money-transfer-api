@@ -2,7 +2,7 @@ package com.moneytransfer.controller;
 
 import com.moneytransfer.dto.GetAccountDto;
 import com.moneytransfer.dto.GetTransferDto;
-import com.moneytransfer.dto.TransferRequestDto;
+import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.exceptions.MoneyTransferException;
@@ -27,13 +27,18 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Implements the {@link TransactionController}
+ */
 @RestController
 @RequiredArgsConstructor
 public class TransactionControllerImpl implements TransactionController {
     private final TransactionService transactionService;
     private final TransactionRequestService transactionRequestService;
+
     /**
      * Get all transactions with amount withing range
+     *
      * @param minAmount
      * @param maxAmount
      * @return A list of GetTransferDto Objects
@@ -45,10 +50,10 @@ public class TransactionControllerImpl implements TransactionController {
     @ApiResponses(
             value = {
                     @ApiResponse(responseCode = "200", description = "Transactions with amount in the given range were found! :)",
-                    content = {@Content(mediaType = "application/json",
-                    schema = @Schema(implementation = GetTransferDto.class))}),
+                            content = {@Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = GetTransferDto.class))}),
                     @ApiResponse(responseCode = "404", description = "Transactions with amount in the given range were NOT found!",
-                    content = @Content)
+                            content = @Content)
             })
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
             @Parameter(description = "The minimum transaction amount.", required = true) @PathVariable BigDecimal minAmount,
@@ -67,6 +72,7 @@ public class TransactionControllerImpl implements TransactionController {
 
     /**
      * Return all accounts with #results<limit
+     *
      * @param limit
      * @return List of Account Objects
      */
@@ -75,11 +81,12 @@ public class TransactionControllerImpl implements TransactionController {
     @Operation(summary = "Get all accounts. Number of results does not exceed the value of the limit variable.")
     public ResponseEntity<List<GetAccountDto>> getAccountsWithLimit(@Parameter(description = "The maximum number of accounts retrieved.", required = true) @PathVariable int limit) {
         Page<Account> accounts = transactionService.getAccountsWithLimit(limit);
-        return ResponseEntity.ok(accounts.get().map(account -> new GetAccountDto(account.getId(), account.getBalance(),account.getCurrency())).collect(Collectors.toList()));
+        return ResponseEntity.ok(accounts.get().map(account -> new GetAccountDto(account.getId(), account.getBalance(), account.getCurrency())).collect(Collectors.toList()));
     }
 
     /**
      * Get Account by id
+     *
      * @param id
      * @return associated Account
      * @throws ResourceNotFoundException
@@ -104,6 +111,7 @@ public class TransactionControllerImpl implements TransactionController {
 
     /**
      * Get Transaction by id
+     *
      * @param id
      * @return GetTransferDto for the associated Transaction
      * @throws ResourceNotFoundException
@@ -128,10 +136,10 @@ public class TransactionControllerImpl implements TransactionController {
     }
 
 
-
     /**
      * New transfer request, optimistic locking
-     * @param transferRequestDTO
+     *
+     * @param newTransferDTO
      * @return GetTransferDto for the new Transaction
      * @throws MoneyTransferException
      */
@@ -149,11 +157,11 @@ public class TransactionControllerImpl implements TransactionController {
                             content = @Content)
             })
     @PostMapping("/transfer/optimistic")
-    public ResponseEntity<GetTransferDto> transferOptimistic(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
+    public ResponseEntity<GetTransferDto> transferOptimistic(@RequestBody NewTransferDto newTransferDTO) throws MoneyTransferException {
         Transaction transaction = transactionService.transferOptimistic(
-                transferRequestDTO.sourceAccountId(),
-                transferRequestDTO.targetAccountId(),
-                transferRequestDTO.amount());
+                newTransferDTO.sourceAccountId(),
+                newTransferDTO.targetAccountId(),
+                newTransferDTO.amount());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
@@ -165,7 +173,8 @@ public class TransactionControllerImpl implements TransactionController {
 
     /**
      * New transfer request, pessimistic locking
-     * @param transferRequestDTO
+     *
+     * @param newTransferDTO
      * @return GetTransferDto for the new Transaction
      * @throws MoneyTransferException
      */
@@ -183,11 +192,11 @@ public class TransactionControllerImpl implements TransactionController {
                             content = @Content)
             })
     @PostMapping("/transfer/pessimistic")
-    public ResponseEntity<GetTransferDto> transferPessimistic(@RequestBody TransferRequestDto transferRequestDTO) throws MoneyTransferException {
+    public ResponseEntity<GetTransferDto> transferPessimistic(@RequestBody NewTransferDto newTransferDTO) throws MoneyTransferException {
         Transaction transaction = transactionService.transferPessimistic(
-                transferRequestDTO.sourceAccountId(),
-                transferRequestDTO.targetAccountId(),
-                transferRequestDTO.amount());
+                newTransferDTO.sourceAccountId(),
+                newTransferDTO.targetAccountId(),
+                newTransferDTO.amount());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
@@ -200,7 +209,8 @@ public class TransactionControllerImpl implements TransactionController {
 
     /**
      * New IDEMPOTENT tranfer request
-     * @param transferRequestDto
+     *
+     * @param newTransferDto
      * @param requestId
      * @return
      * @throws MoneyTransferException
@@ -222,11 +232,11 @@ public class TransactionControllerImpl implements TransactionController {
 
             })
     @PostMapping("/transfer/{requestId}")
-    public ResponseEntity<GetTransferDto> transferRequestSerializable(@RequestBody TransferRequestDto transferRequestDto, @PathVariable UUID requestId) throws MoneyTransferException {
+    public ResponseEntity<GetTransferDto> transferRequestSerializable(@RequestBody NewTransferDto newTransferDto, @PathVariable UUID requestId) throws MoneyTransferException {
         Transaction transaction = transactionRequestService.processRequest(
-                transferRequestDto.sourceAccountId(),
-                transferRequestDto.targetAccountId(),
-                transferRequestDto.amount(),
+                newTransferDto.sourceAccountId(),
+                newTransferDto.targetAccountId(),
+                newTransferDto.amount(),
                 requestId);
         return ResponseEntity
                 .status(HttpStatus.CREATED)

@@ -3,29 +3,22 @@ package com.moneytransfer.service;
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.entity.TransactionRequest;
-import com.moneytransfer.enums.Currency;
-import com.moneytransfer.enums.RequestStatus;
-import com.moneytransfer.exceptions.*;
+import com.moneytransfer.exceptions.InsufficientBalanceException;
+import com.moneytransfer.exceptions.MoneyTransferException;
+import com.moneytransfer.exceptions.ResourceNotFoundException;
+import com.moneytransfer.exceptions.SameAccountException;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionRepository;
-import com.moneytransfer.repository.TransactionRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Implementation for {@link TransactionService}
@@ -38,14 +31,15 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * Gets all the bank accounts
+     *
      * @return all accounts with limit
      */
     public Page<Account> getAccountsWithLimit(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit);
         return accountRepository.findAll(pageRequest);
     }
+
     /**
-     *
      * @param minAmount
      * @param maxAmount
      * @return A list of Transactions with amount in the given range
@@ -54,13 +48,12 @@ public class TransactionServiceImpl implements TransactionService {
     public List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException {
         return transactionRepository.findByAmountBetween(minAmount, maxAmount)
                 .orElseThrow(() -> {
-                    String errorMessage = "Transactions within the specified range: [" +minAmount+","+maxAmount + "] were not found.";
+                    String errorMessage = "Transactions within the specified range: [" + minAmount + "," + maxAmount + "] were not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
     /**
-     *
      * @param id
      * @return Transaction with the given id
      * @throws ResourceNotFoundException
@@ -74,7 +67,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /**
-     *
      * @param id
      * @return Account with the given id
      * @throws ResourceNotFoundException
@@ -89,7 +81,6 @@ public class TransactionServiceImpl implements TransactionService {
 
 
     /**
-     *
      * @param transferAccountsDto
      * @param sourceAccountId
      * @param targetAccountId
@@ -109,6 +100,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * Validates the transfer operation of a new Transaction
+     *
      * @param accounts
      * @param sourceAccountId
      * @param targetAccountId
@@ -128,7 +120,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /**
-     *
      * @param sourceAccountId
      * @param targetAccountId
      * @return the associated Accounts (projection as a dto)
@@ -144,7 +135,6 @@ public class TransactionServiceImpl implements TransactionService {
 
 
     /**
-     *
      * @param sourceAccountId
      * @param targetAccountId
      * @return TransferAccountsDto
@@ -161,6 +151,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * New Transaction with optimistic locking for Accounts
+     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
@@ -175,6 +166,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * New Transaction with pessimistic locking for Accounts
+     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
@@ -186,8 +178,8 @@ public class TransactionServiceImpl implements TransactionService {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
     }
+
     /**
-     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
@@ -199,8 +191,8 @@ public class TransactionServiceImpl implements TransactionService {
         TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
     }
+
     /**
-     *
      * @param sourceAccountId
      * @param targetAccountId
      * @return TransferAccountsDto

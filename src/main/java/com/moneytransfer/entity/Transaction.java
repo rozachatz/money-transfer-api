@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Entity that represents successful money transfers between two {@link Account}
+ */
 @Entity
 @Table(name = "transactions")
 @Getter
@@ -36,6 +39,7 @@ public class Transaction {
     public int hashCode() {
         return Objects.hash(id);
     }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Bank Account entity
+ */
 @Entity
 @Table(name = "accounts")
 @Getter
@@ -19,7 +22,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Account {
-    @Version //optimistic
+    @Version
     protected int version;
     @Id
     private UUID id;
@@ -27,6 +30,7 @@ public class Account {
     @Enumerated(EnumType.STRING)
     private Currency currency;
     private LocalDateTime createdAt;
+
     public void credit(BigDecimal amount) {
         this.balance = balance.add(amount);
     }

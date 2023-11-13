@@ -9,19 +9,20 @@ import com.moneytransfer.repository.TransactionRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
+/**
+ * Implementation for {@link TransactionRequestService}
+ */
 @Service
 @RequiredArgsConstructor
-public class TransactionRequestServiceImpl implements TransactionRequestService{
+public class TransactionRequestServiceImpl implements TransactionRequestService {
     private final TransactionRequestRepository transactionRequestRepository;
     private final TransactionService transactionService;
+
     /**
-     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
@@ -29,18 +30,18 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
      * @return the Transaction associated with the TransactionRequest
      * @throws MoneyTransferException
      */
-    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRED)
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
         String JsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
         return switch (transactionRequest.getRequestStatus()) {
-            case SUCCESS -> { //transaction was successfully completed
+            case SUCCESS -> {
                 validateJson(transactionRequest, JsonBody);
                 yield transactionRequest.getTransaction();
             }
             case IN_PROGRESS ->
                     processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount, JsonBody);
-            case FAILED -> { //transaction failed
+            case FAILED -> {
                 validateJson(transactionRequest, JsonBody);
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
             }
@@ -48,7 +49,6 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
     }
 
     /**
-     *
      * @param transactionRequest
      * @param sourceAccountId
      * @param targetAccountId
@@ -76,6 +76,7 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
 
     /**
      * Gets or creates a Transaction request
+     *
      * @return the Transaction request
      */
     private TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
@@ -84,7 +85,6 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
     }
 
     /**
-     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
@@ -93,8 +93,10 @@ public class TransactionRequestServiceImpl implements TransactionRequestService{
     private String buildJsonString(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) {
         return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
     }
+
     /**
      * Validates if the json body of the TransactionRequest matches with the stored JsonBody
+     *
      * @param transactionRequest
      * @param JsonBody
      * @throws RequestConflictException

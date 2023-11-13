@@ -1,6 +1,7 @@
 package com.moneytransfer.entity;
 
 import com.moneytransfer.enums.RequestStatus;
+import com.moneytransfer.service.TransactionRequestService;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,9 @@ import lombok.Setter;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Entity that represents a request for a new {@link Transaction}
+ */
 @Entity
 @Table(name = "transaction_requests")
 @Getter
