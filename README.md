@@ -2,41 +2,41 @@
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Technologies](#technologies)
-- [Database](#database)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Requests](#requests)
+- [Idempotency](#idempotency)
+- [API Documentation](#api-documentation)
+- [Data Model](#data-model)
 - [Architecture](#architecture)
 - [Testing](#testing)
-- [Dockerization](#dockerization)
+- [Docker](#docker)
 
 ## Introduction
-This project includes a simple microservice for handling financial transactions. The usage of a RESTFull API enables the user to initiate a transfer between two accounts or retrieve a resource by sending an HTTP request to the appropriate endpoint.
+This project includes a simple REST microservice for handling financial transactions with SpringBoot.
 
-## Technologies
-* Java
-* Spring Boot
-* Maven
-* Docker
+### Acceptance Criteria
+- AC 1: Happy path
+- AC 2: Insufficient balance to process money transfer
+- AC 3: Transfer in the same account
+- AC 4: Source/target account does not exist
 
-## Usage
-You can interact with the Money Transfer API by sending POST/GET HTTP requests to the provided endpoints.
-### POST Requests
+## Requests
 ````bash
-curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"79360a7e-5249-4822-b3fe-dabfd40b8737\", \"targetAccountId\": \"ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18\", \"amount\": 30.00}" "http://localhost:8080/api/transfer"
+curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"79360a7e-5249-4822-b3fe-dabfd40b8737\", \"targetAccountId\": \"ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18\", \"amount\": 30.00}" "http://localhost:8080/api/transfer/optimistic"
 ````
+A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts. Option for pessimistic locking is also available by the endpoint "http://localhost:8080/api/transfer/pessimistic".
 
-A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts with amount and ids as specified in the .json payload.
-Option for optimistic and pessimistic type of locking is also available by sending a POST request to the endpoints "http://localhost:8080/api/transfer/optimistic" and "http://localhost:8080/api/transfer/pessimistic", respectively.
+Caching is also supported for GET requests to endpoints that fetch many results, e.g. "http://localhost:8080/api/transactions/{minAmount}/{maxAmount}".
 
-### GET Requests
-**New feature: Cache for GET requests!**
+### Idempotency
+This microservice also supports idempotent POST requests via the endpoint: "http://localhost:8080/api/transfer/{transferRequestId}".
 
-The endpoint "http://localhost:8080/api/transfer/{transactionId}" is used to retrieve information for a transaction with id equal to {transactionId} (type: UUID).
-The endpoint "http://localhost:8080/api/account/{accountId}" is used to retrieve information for a transaction with id equal to {accountId} (type: UUID).
+## API Documentation
+Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
 
-
-## Database
+## Data Model
 ### Account
-The Account entity represents a bank account and has the following attributes:
+The Account entity represents a bank account with the following properties:
 
 | Field     | Description                    |
 |-----------|--------------------------------|
@@ -46,7 +46,7 @@ The Account entity represents a bank account and has the following attributes:
 | createdAt         | Date and time when the account was created |
 
 ### Transaction
-The Transaction entity represents a financial transaction between two accounts and includes the following attributes:
+The Transaction entity represents a financial transaction between two accounts and includes the following properties:
 
 | Field            | Description                          |
 |------------------|--------------------------------------|
@@ -56,42 +56,51 @@ The Transaction entity represents a financial transaction between two accounts a
 | amount           | Amount being transferred              |
 | currency         | Currency of the transaction           |
 
+### TransactionRequest
+The TransactionRequest entity stores information that is crucial for providing idempotent behavior for POST requests (regarding financial Transactions).
+
+| Field                 | Description                                          |
+|-----------------------|------------------------------------------------------|
+| transactionRequest_id | Unique identifier of the TransactionRequest          |
+| transaction_id        | ID of the successful Transaction                     |
+| errorMessage          | Error message                                        |
+| requestStatus         | Status of the TransactionRequest                     |
+| jsonBody              | String representation of the jsonBody of the request |
+
 ## Architecture
-### Controller/Presentation Layer
+### Controller
 **Controller**: Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
 
 ### Data Transfer Objects (Dtos)
 Container classes, read-only purposes.
 
-### Service Package
-Contains the business logic of the application.
+### Service
+#### TransactionRequestService
+Business Logic for executing a request for a financial transaction.
 
-### JPA Repositories Package
-- Maps entities to db tables
-- Allows definition of custom queries.
+#### TransactionService
+Business logic for performing a financial transactions between two accounts.
 
-### Entities Package
-- Describes the data model of the application.
-- Defines the structure and relationships between entities.
+### Repository
+Using JPA.
 
-### Exception Package
-- GlobalAPIExceptionHandler.java: @ControllerAdvice enables handling of all different exceptions in the application.
+### Entity
+- TransactionRequest
+- Transaction
+- Account
+
+### Exceptions
 - Custom exceptions
- 
-## Service Unit Test
-Contains test methods is defined for the following acceptance criteria:
-- AC 1: Happy path for money transfer between two accounts (results in successful transfer)
-- AC 2: Insufficient balance to process money transfer
-- AC 3: Transfer in the same account
-- AC 4: Source/target account does not exist
+- @ControllerAdvice for returning the appropriate HTTP status
 
+## Testing
+At the moment, service integration tests and a repo unit are provided. More to come, as the app progresses! Integration tests use H2 embedded DB.
 
-## API Documentation
-Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
-
-## Dockerization
-The app and db are now dockerized! <3 Let the magic happen by executing the following command:
+## Docker
+The app and (Postgres) db are now dockerized! <3 Let the magic happen by executing the following command:
 ````bash
 docker compose up -- build
 ````
+
+
 

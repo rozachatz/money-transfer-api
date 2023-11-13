@@ -31,7 +31,7 @@ public class TransactionRequestServiceImplTest {
     UUID id1 = UUID.fromString("6a7d71f0-6f12-45a6-91a1-198272a09fe8"), id2=UUID.fromString("e4c6f84c-8f92-4f2b-90bb-4352e9379bca");
     @Test(expected = InsufficientBalanceException.class)
     public void testExecute_Fail() throws MoneyTransferException {
-        BigDecimal amount = BigDecimal.valueOf(1000000000);
+        BigDecimal amount = BigDecimal.valueOf(100);
         UUID transactionRequestId = UUID.randomUUID();
         transactionRequestServiceImpl.processRequest(id1,id2,amount,transactionRequestId);
         Optional< TransactionRequest> retrievedTransactionRequest = transactionRequestRepository.findById(transactionRequestId);

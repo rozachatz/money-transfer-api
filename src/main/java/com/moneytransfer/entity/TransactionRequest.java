@@ -19,10 +19,10 @@ public class TransactionRequest {
     private UUID requestId;
     @OneToOne()
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
-    private Transaction transaction;//null if requestStatus = FAIL
+    private Transaction transaction;
     private RequestStatus requestStatus;
     private String jsonBody;
-    private String errorMessage;//null if requestStatus IN (SUCCESS,IN_PROGRESS)
+    private String errorMessage;
 
     public TransactionRequest(UUID requestId, RequestStatus requestStatus) {
         this.requestId = requestId;
