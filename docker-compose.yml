@@ -9,10 +9,14 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=mydb
+
     ports:
       - '5432:5432'
     volumes:
       - ./sql/db_init.sql:/docker-entrypoint-initdb.d/db_init.sql
+      - ./postgres-data:/var/lib/postgresql/data
+
+
   app:
     build:
       context: .
@@ -22,4 +26,4 @@ services:
       - '8080:8080'
       - '5005:5005'
     depends_on:
-      - db  # Wait for the 'db' service to be ready before starting 'app'
+      - db
