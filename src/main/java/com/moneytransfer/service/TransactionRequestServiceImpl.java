@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
 /**
  * Implementation for {@link TransactionRequestService}
  */
@@ -48,22 +49,29 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
         };
     }
 
-    /**
-     * @param transactionRequest
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @param JsonBody
-     * @return a new Transaction associated with the TransactionRequest
-     * @throws MoneyTransferException
-     */
+    private TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
+        return transactionRequestRepository.findById(requestId)
+                .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "", "")));
+    }
+
+    private String buildJsonString(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) {
+        return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
+    }
+
+    private void validateJson(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
+        if (!JsonBody.equals(transactionRequest.getJsonBody())) {
+            String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
+            throw new RequestConflictException(errorMessage);
+        }
+    }
+
     private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, String JsonBody) throws MoneyTransferException {
         try {
             Transaction transaction = transactionService.transferSerializable(sourceAccountId, targetAccountId, amount);
             transactionRequest.setTransaction(transaction);
             transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
             return transaction;
-        } catch (MoneyTransferException | RuntimeException e) { //checked or unchecked (rollback)
+        } catch (MoneyTransferException | RuntimeException e) {
             transactionRequest.setErrorMessage(e.getMessage());
             transactionRequest.setRequestStatus(RequestStatus.FAILED);
             throw e;
@@ -73,39 +81,5 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
         }
     }
 
-
-    /**
-     * Gets or creates a Transaction request
-     *
-     * @return the Transaction request
-     */
-    private TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
-        return transactionRequestRepository.findById(requestId)
-                .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "", "")));
-    }
-
-    /**
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @return String to compare with json body of Transaction request
-     */
-    private String buildJsonString(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) {
-        return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
-    }
-
-    /**
-     * Validates if the json body of the TransactionRequest matches with the stored JsonBody
-     *
-     * @param transactionRequest
-     * @param JsonBody
-     * @throws RequestConflictException
-     */
-    private void validateJson(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
-        if (!JsonBody.equals(transactionRequest.getJsonBody())) {
-            String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
-            throw new RequestConflictException(errorMessage);
-        }
-    }
 
 }

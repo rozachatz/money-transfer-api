@@ -30,67 +30,83 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
 
     /**
-     * Gets all the bank accounts
+     * Transfer with optimistic locking
      *
-     * @return all accounts with limit
+     * @param sourceAccountId
+     * @param targetAccountId
+     * @param amount
+     * @return Transaction
+     * @throws MoneyTransferException
      */
-    public Page<Account> getAccountsWithLimit(int limit) {
-        PageRequest pageRequest = PageRequest.of(0, limit);
-        return accountRepository.findAll(pageRequest);
+    @Transactional
+    public Transaction transferOptimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
+        return initiateTransfer(transferAccountsDto, amount);
     }
 
-    /**
-     * @param minAmount
-     * @param maxAmount
-     * @return A list of Transactions with amount in the given range
-     * @throws ResourceNotFoundException
-     */
-    public List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException {
-        return transactionRepository.findByAmountBetween(minAmount, maxAmount)
+    private TransferAccountsDto getAccountsByIdsOptimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
+        return accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Transactions within the specified range: [" + minAmount + "," + maxAmount + "] were not found.";
+                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
     /**
-     * @param id
-     * @return Transaction with the given id
-     * @throws ResourceNotFoundException
+     * Transfer with pessimistic locking
+     *
+     * @param sourceAccountId
+     * @param targetAccountId
+     * @param amount
+     * @return Transaction
+     * @throws MoneyTransferException
      */
-    public Transaction getTransactionById(UUID id) throws ResourceNotFoundException {
-        return transactionRepository.findById(id)
+    @Transactional
+    public Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
+        return initiateTransfer(transferAccountsDto, amount);
+    }
+
+    private TransferAccountsDto getAccountsByIdsPessimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
+        return accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Transaction with ID: " + id + " was not found.";
+                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
     /**
-     * @param id
-     * @return Account with the given id
-     * @throws ResourceNotFoundException
-     */
-    public Account getAccountById(UUID id) throws ResourceNotFoundException {
-        return accountRepository.findById(id)
-                .orElseThrow(() -> {
-                    String errorMessage = "Account with ID: " + id + " was not found.";
-                    return new ResourceNotFoundException(errorMessage);
-                });
-    }
-
-
-    /**
-     * @param transferAccountsDto
+     * Transfer with serializable isolation
+     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
      * @return a new Transaction
      * @throws MoneyTransferException
      */
-    @Transactional
-    public Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        validateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Transaction transferSerializable(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+        TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
+        return initiateTransfer(transferAccountsDto, amount);
+    }
+
+    private TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
+        return accountRepository.findByIds(sourceAccountId, targetAccountId)
+                .orElseThrow(() -> {
+                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
+                    return new ResourceNotFoundException(errorMessage);
+                });
+    }
+
+    /**
+     * Performs validations and the transfer process.
+     * @param transferAccountsDto
+     * @param amount
+     * @return
+     * @throws MoneyTransferException
+     */
+    private Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, BigDecimal amount) throws MoneyTransferException {
+        validateTransfer(transferAccountsDto, amount);
         Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
         sourceAccount.debit(amount);
         targetAccount.credit(amount);
@@ -98,17 +114,10 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
     }
 
-    /**
-     * Validates the transfer operation of a new Transaction
-     *
-     * @param accounts
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @throws MoneyTransferException
-     */
-    private void validateTransfer(TransferAccountsDto accounts, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        if (sourceAccountId.equals(targetAccountId)) {  /* AC3: Same Account */
+    private void validateTransfer(TransferAccountsDto accounts, BigDecimal amount) throws MoneyTransferException {
+        UUID sourceAccountId = accounts.getSourceAccount().getId();
+        UUID targetAccountId = accounts.getTargetAccount().getId();
+        if (sourceAccountId == targetAccountId) {  /* AC3: Same Account */
             String errorMessage = "Transfer in the same account is not allowed. Account ID: " + sourceAccountId + ".";
             throw new SameAccountException(errorMessage);
         }
@@ -120,88 +129,43 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /**
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @return the associated Accounts (projection as a dto)
+     * Gets all accounts with limited number of results.
+     *
+     * @param limit
+     * @return
+     */
+    public Page<Account> getAccountsWithLimit(int limit) {
+        PageRequest pageRequest = PageRequest.of(0, limit);
+        return accountRepository.findAll(pageRequest);
+    }
+
+    /**
+     * Return all transactions within the given amount range
+     *
+     * @param minAmount
+     * @param maxAmount
+     * @return
      * @throws ResourceNotFoundException
      */
-    public TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
-        return accountRepository.findByIds(sourceAccountId, targetAccountId)
+    public List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException {
+        return transactionRepository.findByAmountBetween(minAmount, maxAmount)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
+                    String errorMessage = "Transactions within the specified range: [" + minAmount + "," + maxAmount + "] were not found.";
+                    return new ResourceNotFoundException(errorMessage);
+                });
+    }
+    public Transaction getTransactionById(UUID id) throws ResourceNotFoundException {
+        return transactionRepository.findById(id)
+                .orElseThrow(() -> {
+                    String errorMessage = "Transaction with ID: " + id + " was not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
-
-    /**
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @return TransferAccountsDto
-     * @throws ResourceNotFoundException
-     */
-    public TransferAccountsDto getAccountsByIdsPessimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
-        return accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId)
+    public Account getAccountById(UUID id) throws ResourceNotFoundException {
+        return accountRepository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
-                    return new ResourceNotFoundException(errorMessage);
-                });
-    }
-
-
-    /**
-     * New Transaction with optimistic locking for Accounts
-     *
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @return new Transaction
-     * @throws MoneyTransferException
-     */
-    @Transactional
-    public Transaction transferOptimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
-        return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
-    }
-
-    /**
-     * New Transaction with pessimistic locking for Accounts
-     *
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @return a new Transaction
-     * @throws MoneyTransferException
-     */
-    @Transactional
-    public Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
-        return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
-    }
-
-    /**
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @param amount
-     * @return a new Transaction
-     * @throws MoneyTransferException
-     */
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Transaction transferSerializable(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
-        return initiateTransfer(transferAccountsDto, sourceAccountId, targetAccountId, amount);
-    }
-
-    /**
-     * @param sourceAccountId
-     * @param targetAccountId
-     * @return TransferAccountsDto
-     * @throws ResourceNotFoundException
-     */
-    public TransferAccountsDto getAccountsByIdsOptimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
-        return accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId)
-                .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
+                    String errorMessage = "Account with ID: " + id + " was not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }

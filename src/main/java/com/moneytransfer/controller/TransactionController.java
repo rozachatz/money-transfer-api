@@ -25,7 +25,7 @@ public interface TransactionController {
 
     ResponseEntity<GetTransferDto> transferPessimistic(NewTransferDto newTransferDTO) throws MoneyTransferException;
 
-    ResponseEntity<GetTransferDto> transferRequestSerializable(NewTransferDto newTransferDTO, UUID requestId) throws MoneyTransferException;
+    ResponseEntity<GetTransferDto> transferIdempotentRequest(NewTransferDto newTransferDTO, UUID requestId) throws MoneyTransferException;
 
     ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
 
