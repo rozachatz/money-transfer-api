@@ -1,7 +1,9 @@
 package com.moneytransfer.entity;
 
 import com.moneytransfer.enums.RequestStatus;
+import com.moneytransfer.service.TransactionRequestService;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,25 +11,25 @@ import lombok.Setter;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Entity that represents a request for a new {@link Transaction}
+ */
 @Entity
 @Table(name = "transaction_requests")
 @Getter
 @Setter
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class TransactionRequest {
     @Id
+    @Column(name = "request_id")
     private UUID requestId;
     @OneToOne()
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
-    private Transaction transaction;//null if requestStatus = FAIL
+    private Transaction transaction;
     private RequestStatus requestStatus;
     private String jsonBody;
-    private String errorMessage;//null if requestStatus IN (SUCCESS,IN_PROGRESS)
-
-    public TransactionRequest(UUID requestId, RequestStatus requestStatus) {
-        this.requestId = requestId;
-        this.requestStatus = requestStatus;
-    }
+    private String errorMessage;
 
     @Override
     public int hashCode() {

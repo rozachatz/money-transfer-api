@@ -16,6 +16,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
             "FROM " +
             "Account a1, Account a2 " +
             "WHERE a1.id = :sourceAccountId AND a2.id = :targetAccountId";
+
     @Query(value = GET_ACCOUNTS_QUERY)
     Optional<TransferAccountsDto> findByIds(UUID sourceAccountId, UUID targetAccountId);
 
@@ -26,7 +27,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Lock(LockModeType.OPTIMISTIC)
     @Query(value = GET_ACCOUNTS_QUERY)
     Optional<TransferAccountsDto> findByIdAndLockOptimistic(UUID sourceAccountId, UUID targetAccountId);
-
 
 
 }

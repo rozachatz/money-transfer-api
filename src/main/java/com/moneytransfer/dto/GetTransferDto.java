@@ -6,6 +6,9 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Dto for {@link com.moneytransfer.entity.Transaction}
+ */
 @Getter
 @AllArgsConstructor
 public class GetTransferDto {
