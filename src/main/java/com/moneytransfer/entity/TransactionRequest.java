@@ -3,6 +3,7 @@ package com.moneytransfer.entity;
 import com.moneytransfer.enums.RequestStatus;
 import com.moneytransfer.service.TransactionRequestService;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,8 +19,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class TransactionRequest {
     @Id
+    @Column(name = "request_id")
     private UUID requestId;
     @OneToOne()
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
@@ -27,11 +30,6 @@ public class TransactionRequest {
     private RequestStatus requestStatus;
     private String jsonBody;
     private String errorMessage;
-
-    public TransactionRequest(UUID requestId, RequestStatus requestStatus) {
-        this.requestId = requestId;
-        this.requestStatus = requestStatus;
-    }
 
     @Override
     public int hashCode() {

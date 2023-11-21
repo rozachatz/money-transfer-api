@@ -26,7 +26,7 @@ REFERENCES accounts(id);
 
 
 CREATE TABLE transaction_requests (
-    REQUEST_ID UUID PRIMARY KEY,
+    request_id UUID PRIMARY KEY,
     transaction_id UUID,
     REQUEST_STATUS VARCHAR(255),
     JSON_BODY TEXT,

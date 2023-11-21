@@ -81,7 +81,7 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
      */
     private TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
         return transactionRequestRepository.findById(requestId)
-                .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, RequestStatus.IN_PROGRESS)));
+                .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "", "")));
     }
 
     /**

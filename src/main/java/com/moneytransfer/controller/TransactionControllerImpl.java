@@ -227,7 +227,7 @@ public class TransactionControllerImpl implements TransactionController {
                             content = @Content),
                     @ApiResponse(responseCode = "400", description = "Transactions within the same account are not allowed.",
                             content = @Content),
-                    @ApiResponse(responseCode = "409", description = "Transaction request has FAILED and a TransactionRequest conflict is detected (i.e., this is not the first time this request is performed).",
+                    @ApiResponse(responseCode = "409", description = "A TransactionRequest conflict is detected (i.e., this is not the first time this request is performed). This means that the transaction request has status failed and/or the json body provided does not match the original.",
                             content = @Content)
 
             })
