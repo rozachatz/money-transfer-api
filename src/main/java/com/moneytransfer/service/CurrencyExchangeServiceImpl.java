@@ -20,7 +20,7 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
     @Value("${freecurrencyapi.apiUrl}")
     private String apiUrl;
 
-    public BigDecimal exchangeCurrency(double amount, Currency sourceCurrency, Currency targetCurrency) throws MoneyTransferException {
+    public BigDecimal exchangeCurrency(BigDecimal amount, Currency sourceCurrency, Currency targetCurrency) throws MoneyTransferException {
         String url = apiUrl + apiKey;
         ResponseEntity<ExchangeRatesResponse> responseEntity =
                 new RestTemplate().exchange(url, HttpMethod.GET, null, ExchangeRatesResponse.class);
@@ -31,7 +31,7 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
                 Double targetRate = response.getData().get(targetCurrency.name());
 
                 if (sourceRate != null && targetRate != null) {
-                    return BigDecimal.valueOf(amount * (targetRate / sourceRate));
+                    return amount.multiply(BigDecimal.valueOf(targetRate / sourceRate));
                 }
             }
         }

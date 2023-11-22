@@ -6,5 +6,5 @@ import com.moneytransfer.exceptions.MoneyTransferException;
 import java.math.BigDecimal;
 
 public interface CurrencyExchangeService {
-    BigDecimal exchangeCurrency(double amount, Currency targetCurrency, Currency sourceCurrency) throws MoneyTransferException;
+    BigDecimal exchangeCurrency(BigDecimal amount, Currency targetCurrency, Currency sourceCurrency) throws MoneyTransferException;
 }

@@ -101,7 +101,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /**
-     * Performs validations and the transfer process.
+     * Performs the transfer process and currency exchange (if needed).
      * @param transferAccountsDto
      * @param amount
      * @return
@@ -117,12 +117,13 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void performTransfer(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
         sourceAccount.debit(amount);
-        Currency sourceCurrency=sourceAccount.getCurrency(), targetCurrency=targetAccount.getCurrency();
-        targetAccount.credit(calculateTargetAmount(sourceCurrency,targetCurrency,amount));
+        BigDecimal targetAmount = calculateTargetAmount(sourceAccount,targetAccount,amount);
+        targetAccount.credit(targetAmount);
     }
 
-    private BigDecimal calculateTargetAmount(Currency sourceCurrency, Currency targetCurrency, BigDecimal amount) throws MoneyTransferException {
-        if (sourceCurrency!=targetCurrency) return currencyExchangeService.exchangeCurrency(amount.doubleValue(),sourceCurrency,targetCurrency);
+    private BigDecimal calculateTargetAmount(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
+        Currency sourceCurrency=sourceAccount.getCurrency(), targetCurrency=targetAccount.getCurrency();
+        if (sourceCurrency!=targetCurrency) return currencyExchangeService.exchangeCurrency(amount,sourceCurrency,targetCurrency);
         return amount;
     }
 
