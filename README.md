@@ -24,12 +24,12 @@ This project includes a simple REST microservice for handling financial transact
 ````bash
 curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"79360a7e-5249-4822-b3fe-dabfd40b8737\", \"targetAccountId\": \"ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18\", \"amount\": 30.00}" "http://localhost:8080/api/transfer/optimistic"
 ````
-A POST request to the endpoint "http://localhost:8080/api/transfer" initiates a transfer between two accounts. Option for pessimistic locking is also available by the endpoint "http://localhost:8080/api/transfer/pessimistic".
+A POST request to the endpoint "http://localhost:8080/api/transfer/optimistic" initiates a transfer between two accounts. Option for pessimistic locking is also available by the endpoint "http://localhost:8080/api/transfer/pessimistic".
 
-Caching is also supported for GET requests to endpoints that fetch many results, e.g. "http://localhost:8080/api/transactions/{minAmount}/{maxAmount}".
+Caching is also supported for some GET requests, e.g. "http://localhost:8080/api/transactions/{minAmount}/{maxAmount}".
 
 ### Idempotency
-This microservice also supports idempotent POST requests via the endpoint: "http://localhost:8080/api/transfer/{transferRequestId}".
+This microservice also supports idempotent POST requests via the endpoint: "http://localhost:8080/api/transfer/request/{requestId}".
 
 ## API Documentation
 Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
@@ -57,7 +57,7 @@ The Transaction entity represents a financial transaction between two accounts a
 | currency         | Currency of the transaction           |
 
 ### TransactionRequest
-The TransactionRequest entity stores information that is crucial for providing idempotent behavior for POST requests (regarding financial Transactions).
+The TransactionRequest entity provides idempotent behavior for POST transfer requests.
 
 | Field                 | Description                                          |
 |-----------------------|------------------------------------------------------|
@@ -69,7 +69,7 @@ The TransactionRequest entity stores information that is crucial for providing i
 
 ## Architecture
 ### Controller
-**Controller**: Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
+Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
 
 ### Data Transfer Objects (Dtos)
 Container classes, read-only purposes.
@@ -82,7 +82,7 @@ Business Logic for executing a request for a financial transaction.
 Business logic for performing a financial transactions between two accounts.
 
 ### Repository
-Using JPA.
+JPA
 
 ### Entity
 - TransactionRequest
@@ -91,16 +91,27 @@ Using JPA.
 
 ### Exceptions
 - Custom exceptions
-- @ControllerAdvice for returning the appropriate HTTP status
+- GlobalAPIExceptionHandler returns the appropriate HTTP status for each custom exception
 
 ## Testing
-At the moment, service integration tests and a repo unit are provided. More to come, as the app progresses! Integration tests use H2 embedded DB.
+At the moment, integration tests for services are provided. More to come, as the app progresses! 
+
+*Note: Integration tests use H2 embedded db.*
 
 ## Docker
 The app and (Postgres) db are now dockerized! <3 Let the magic happen by executing the following command:
 ````bash
-docker compose up -- build
+docker compose up --build
 ````
+*Important note:* The first time you attempt to test the money transfer app, you are advised to first execute:
+````bash
+docker compose up db --build
+````
+and then, 
+````bash
+docker compose up app --build
+````
+to allow db initialization to happen before starting the app.
 
 
 
