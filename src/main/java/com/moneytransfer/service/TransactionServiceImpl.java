@@ -3,6 +3,7 @@ package com.moneytransfer.service;
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
+import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
@@ -28,6 +29,7 @@ import java.util.UUID;
 public class TransactionServiceImpl implements TransactionService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final CurrencyExchangeService currencyExchangeService;
 
     /**
      * Transfer with optimistic locking
@@ -108,10 +110,20 @@ public class TransactionServiceImpl implements TransactionService {
     private Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, BigDecimal amount) throws MoneyTransferException {
         validateTransfer(transferAccountsDto, amount);
         Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
-        sourceAccount.debit(amount);
-        targetAccount.credit(amount);
+        performTransfer(sourceAccount, targetAccount, amount);
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
         return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
+    }
+
+    private void performTransfer(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
+        sourceAccount.debit(amount);
+        Currency sourceCurrency=sourceAccount.getCurrency(), targetCurrency=targetAccount.getCurrency();
+        targetAccount.credit(calculateTargetAmount(sourceCurrency,targetCurrency,amount));
+    }
+
+    private BigDecimal calculateTargetAmount(Currency sourceCurrency, Currency targetCurrency, BigDecimal amount) throws MoneyTransferException {
+        if (sourceCurrency!=targetCurrency) return currencyExchangeService.exchangeCurrency(amount.doubleValue(),sourceCurrency,targetCurrency);
+        return amount;
     }
 
     private void validateTransfer(TransferAccountsDto accounts, BigDecimal amount) throws MoneyTransferException {

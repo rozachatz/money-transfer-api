@@ -1,5 +1,6 @@
 package com.moneytransfer.enums;
 
 public enum Currency {
-    EUR
+    EUR,
+    USD
 }
