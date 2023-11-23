@@ -19,7 +19,7 @@ public class CurrencyExchangeServiceImplTest {
 
     @Test
     public void testAPI_Exchange() throws MoneyTransferException {
-        BigDecimal amount = currencyExchangeServiceImpl.exchangeCurrency(BigDecimal.valueOf(10), Currency.EUR, Currency.USD);
+        BigDecimal amount = currencyExchangeServiceImpl.exchangeCurrency(BigDecimal.valueOf(10), Currency.EUR, Currency.CAD);
         Assert.assertTrue(amount.compareTo(BigDecimal.ZERO)>0);
     }
 }

@@ -103,7 +103,7 @@ The app and (Postgres) db are now dockerized! <3 Let the magic happen by executi
 ````bash
 docker compose up --build
 ````
-*Important note:* The first time you attempt to test the money transfer app, you are advised to first execute:
+*Important note:* The first time you try the money transfer app, you are advised to first execute:
 ````bash
 docker compose up db --build
 ````
