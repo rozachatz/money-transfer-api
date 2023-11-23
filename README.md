@@ -12,11 +12,13 @@
 - [Docker](#docker)
 
 ## Introduction
-This project includes a simple REST microservice for handling financial transactions with SpringBoot.
+This project includes a simple (yet non-stop evolving 😌) REST microservice for handling financial transactions 💸, built with SpringBoot.  
+
+*Currency exchange is now supported, using* "https://freecurrencyapi.com/" 😁.
 
 ### Acceptance Criteria
 - AC 1: Happy path
-- AC 2: Insufficient balance to process money transfer
+- AC 2: Insufficient balance
 - AC 3: Transfer in the same account
 - AC 4: Source/target account does not exist
 
@@ -32,7 +34,7 @@ Caching is also supported for some GET requests, e.g. "http://localhost:8080/api
 This microservice also supports idempotent POST requests via the endpoint: "http://localhost:8080/api/transfer/request/{requestId}".
 
 ## API Documentation
-Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app :)
+Visit "http://localhost:8080/api/swagger-ui/index.html" to explore the endpoints and try-out the app 😉
 
 ## Data Model
 ### Account
@@ -67,7 +69,7 @@ The TransactionRequest entity provides idempotent behavior for POST transfer req
 | requestStatus         | Status of the TransactionRequest                     |
 | jsonBody              | String representation of the jsonBody of the request |
 
-## Architecture
+## Architecture 🧐
 ### Controller
 Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
 
@@ -93,25 +95,22 @@ JPA
 - Custom exceptions
 - GlobalAPIExceptionHandler returns the appropriate HTTP status for each custom exception
 
-## Testing
+## Testing 🤓
 At the moment, integration tests for services are provided. More to come, as the app progresses! 
 
 *Note: Integration tests use H2 embedded db.*
 
 ## Docker
-The app and (Postgres) db are now dockerized! <3 Let the magic happen by executing the following command:
+The app and (Postgres) db are now dockerized! ❤️ Let the magic happen by executing the following command:
 ````bash
 docker compose up --build
 ````
-*Important note:* The first time you attempt to test the money transfer app, you are advised to first execute:
+*Important note:* The first time you try-out the money transfer microservice, you are advised to execute these commands instead:
 ````bash
 docker compose up db --build
-````
-and then, 
-````bash
 docker compose up app --build
 ````
-to allow db initialization to happen before starting the app.
+and allow db setup to complete before starting the app.
 
 
 
