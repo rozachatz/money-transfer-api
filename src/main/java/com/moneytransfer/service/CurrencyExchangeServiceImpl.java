@@ -10,6 +10,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 
+/**
+ * Implementation of {@link CurrencyExchangeService}
+ */
 @Service
 public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
 
