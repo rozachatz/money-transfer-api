@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * Implementation for {@link TransactionRequestService}
+ * Implementation for {@link TransactionRequestService}.
  */
 @Service
 @RequiredArgsConstructor
@@ -23,27 +23,29 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
     private final TransactionRequestRepository transactionRequestRepository;
     private final TransactionService transactionService;
 
-    /**
+    /** Processes the TransactionRequest.
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
      * @param requestId
-     * @return the Transaction associated with the TransactionRequest
+     * @return Transaction
      * @throws MoneyTransferException
      */
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
         TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
-        String JsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
+        String jsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
         return switch (transactionRequest.getRequestStatus()) {
             case SUCCESS -> {
-                validateJson(transactionRequest, JsonBody);
+                validateJson(transactionRequest, jsonBody);
                 yield transactionRequest.getTransaction();
             }
-            case IN_PROGRESS ->
-                    processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount, JsonBody);
+            case IN_PROGRESS -> {
+                transactionRequest.setJsonBody(jsonBody);
+                yield processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount);
+            }
             case FAILED -> {
-                validateJson(transactionRequest, JsonBody);
+                validateJson(transactionRequest, jsonBody);
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
             }
         };
@@ -58,14 +60,14 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
         return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
     }
 
-    private void validateJson(TransactionRequest transactionRequest, String JsonBody) throws RequestConflictException {
-        if (!JsonBody.equals(transactionRequest.getJsonBody())) {
+    private void validateJson(TransactionRequest transactionRequest, String jsonBody) throws RequestConflictException {
+        if (!jsonBody.equals(transactionRequest.getJsonBody())) {
             String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
             throw new RequestConflictException(errorMessage);
         }
     }
 
-    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, String JsonBody) throws MoneyTransferException {
+    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         try {
             Transaction transaction = transactionService.transferSerializable(sourceAccountId, targetAccountId, amount);
             transactionRequest.setTransaction(transaction);
@@ -76,7 +78,6 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
             transactionRequest.setRequestStatus(RequestStatus.FAILED);
             throw e;
         } finally {
-            transactionRequest.setJsonBody(JsonBody);
             transactionRequestRepository.save(transactionRequest);
         }
     }

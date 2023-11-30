@@ -22,17 +22,27 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Implementation for {@link TransactionService}
+ * Implementation for {@link TransactionService}.
  */
+
 @Service
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
+    /**
+     * The Account repository.
+     */
     private final AccountRepository accountRepository;
+    /**
+     * The Transaction repository.
+     */
     private final TransactionRepository transactionRepository;
+    /**
+     * The Currency exchange service.
+     */
     private final CurrencyExchangeService currencyExchangeService;
 
     /**
-     * Transfer with optimistic locking
+     * Transfer with optimistic locking.
      *
      * @param sourceAccountId
      * @param targetAccountId
@@ -41,7 +51,8 @@ public class TransactionServiceImpl implements TransactionService {
      * @throws MoneyTransferException
      */
     @Transactional
-    public Transaction transferOptimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    public Transaction transferOptimistic(
+            UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
         TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, amount);
     }
@@ -102,14 +113,16 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * Performs the transfer process and currency exchange (if needed).
+     *
      * @param transferAccountsDto
      * @param amount
-     * @return
+     * @return new Transaction
      * @throws MoneyTransferException
      */
     private Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, BigDecimal amount) throws MoneyTransferException {
         validateTransfer(transferAccountsDto, amount);
-        Account sourceAccount = transferAccountsDto.getSourceAccount(), targetAccount = transferAccountsDto.getTargetAccount();
+        Account sourceAccount = transferAccountsDto.getSourceAccount();
+        Account targetAccount = transferAccountsDto.getTargetAccount();
         performTransfer(sourceAccount, targetAccount, amount);
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
         return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
@@ -117,13 +130,16 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void performTransfer(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
         sourceAccount.debit(amount);
-        BigDecimal targetAmount = calculateTargetAmount(sourceAccount,targetAccount,amount);
+        BigDecimal targetAmount = calculateTargetAmount(sourceAccount, targetAccount, amount);
         targetAccount.credit(targetAmount);
     }
 
     private BigDecimal calculateTargetAmount(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
-        Currency sourceCurrency=sourceAccount.getCurrency(), targetCurrency=targetAccount.getCurrency();
-        if (sourceCurrency!=targetCurrency) return currencyExchangeService.exchangeCurrency(amount,sourceCurrency,targetCurrency);
+        Currency sourceCurrency = sourceAccount.getCurrency();
+        Currency targetCurrency = targetAccount.getCurrency();
+        if (sourceCurrency != targetCurrency) {
+            return currencyExchangeService.exchangeCurrency(amount, sourceCurrency, targetCurrency);
+        }
         return amount;
     }
 
@@ -145,7 +161,7 @@ public class TransactionServiceImpl implements TransactionService {
      * Gets all accounts with limited number of results.
      *
      * @param limit
-     * @return
+     * @return Accounts
      */
     public Page<Account> getAccountsWithLimit(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit);
@@ -153,11 +169,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /**
-     * Return all transactions within the given amount range
+     * Return all transactions within the given amount range.
      *
      * @param minAmount
      * @param maxAmount
-     * @return
+     * @return Transactions
      * @throws ResourceNotFoundException
      */
     public List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException {
@@ -167,6 +183,14 @@ public class TransactionServiceImpl implements TransactionService {
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
+
+    /**
+     * Get Transaction by id.
+     * @param id
+     * @return Transaction
+     * @throws ResourceNotFoundException
+     */
+
     public Transaction getTransactionById(UUID id) throws ResourceNotFoundException {
         return transactionRepository.findById(id)
                 .orElseThrow(() -> {
@@ -175,6 +199,12 @@ public class TransactionServiceImpl implements TransactionService {
                 });
     }
 
+    /**
+     * Get Account by id.
+     * @param id
+     * @return Transaction
+     * @throws ResourceNotFoundException
+     */
     public Account getAccountById(UUID id) throws ResourceNotFoundException {
         return accountRepository.findById(id)
                 .orElseThrow(() -> {
