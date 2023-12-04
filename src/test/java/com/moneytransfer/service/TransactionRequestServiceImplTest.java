@@ -1,10 +1,16 @@
 package com.moneytransfer.service;
 
+import com.beust.ah.A;
+import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.TransactionRequest;
+import com.moneytransfer.enums.Currency;
 import com.moneytransfer.enums.RequestStatus;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
+import com.moneytransfer.repository.AccountRepository;
+import com.moneytransfer.repository.TransactionRepository;
 import com.moneytransfer.repository.TransactionRequestRepository;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
@@ -14,6 +20,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,18 +29,24 @@ import java.util.UUID;
 @ActiveProfiles("test")
 @SpringBootTest
 public class TransactionRequestServiceImplTest {
-
-    UUID sourceAccountId = UUID.fromString("6a7d71f0-6f12-45a6-91a1-198272a09fe8"), targetAccountId = UUID.fromString("e4c6f84c-8f92-4f2b-90bb-4352e9379bca");
+    Account sourceAccount, targetAccount;
     @Autowired
     private TransactionRequestServiceImpl transactionRequestServiceImpl;
     @Autowired
     private TransactionRequestRepository transactionRequestRepository;
-
-    @Test(expected = InsufficientBalanceException.class)
+    @Autowired
+    private AccountRepository accountRepository;
+    @Before
+    public void setup(){
+        sourceAccount = new Account(0, UUID.randomUUID(), BigDecimal.valueOf(10), Currency.EUR, LocalDateTime.now());
+        targetAccount = new Account(0, UUID.randomUUID(), BigDecimal.valueOf(10), Currency.EUR, LocalDateTime.now());
+        accountRepository.saveAll(List.of(targetAccount,sourceAccount));
+    }
+    @Test(expected = MoneyTransferException.class)
     public void testRequestFailed() throws MoneyTransferException {
-        BigDecimal amount = BigDecimal.valueOf(100);
+        BigDecimal amount = sourceAccount.getBalance().multiply(BigDecimal.valueOf(10));
         UUID transactionRequestId = UUID.randomUUID();
-        transactionRequestServiceImpl.processRequest(sourceAccountId, targetAccountId, amount, transactionRequestId);
+        transactionRequestServiceImpl.processRequest(sourceAccount.getId(), targetAccount.getId(), amount, transactionRequestId);
         Optional<TransactionRequest> retrievedTransactionRequest = transactionRequestRepository.findById(transactionRequestId);
         Assertions.assertTrue(retrievedTransactionRequest.isPresent());
         TransactionRequest transactionRequest = retrievedTransactionRequest.get();
@@ -42,9 +56,9 @@ public class TransactionRequestServiceImplTest {
 
     @Test
     public void testRequestSuccess() throws MoneyTransferException {
-        BigDecimal amount = BigDecimal.valueOf(1);
+        BigDecimal amount = sourceAccount.getBalance();
         UUID transactionRequestId = UUID.randomUUID();
-        transactionRequestServiceImpl.processRequest(sourceAccountId, targetAccountId, amount, transactionRequestId);
+        transactionRequestServiceImpl.processRequest(sourceAccount.getId(), targetAccount.getId(), amount, transactionRequestId);
         Optional<TransactionRequest> retrievedTransactionRequest = transactionRequestRepository.findById(transactionRequestId);
         Assertions.assertTrue(retrievedTransactionRequest.isPresent());
         TransactionRequest transactionRequest = retrievedTransactionRequest.get();
