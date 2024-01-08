@@ -4,7 +4,8 @@ import com.moneytransfer.dto.ExchangeRatesResponse;
 import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,7 +25,7 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
 
     public BigDecimal exchangeCurrency(BigDecimal amount, final Currency sourceCurrency, final Currency targetCurrency) throws MoneyTransferException {
         var subUrl = apiUrl.concat(apiKey);
-        var url = String.format("%1$s&currencies=%2$s&base_currency=%3$s",subUrl, targetCurrency.name(),sourceCurrency.name());
+        var url = String.format("%1$s&currencies=%2$s&base_currency=%3$s", subUrl, targetCurrency.name(), sourceCurrency.name());
         ResponseEntity<ExchangeRatesResponse> responseEntity = new RestTemplate().exchange(url, HttpMethod.GET, null, ExchangeRatesResponse.class);
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             ExchangeRatesResponse response = responseEntity.getBody();

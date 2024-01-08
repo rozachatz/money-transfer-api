@@ -14,7 +14,6 @@ import java.util.UUID;
 /**
  * Controller handling money transfer operations/requests
  * and resource retrieval.
- *
  */
 public interface TransactionController {
     ResponseEntity<GetTransferDto> getTransactionById(UUID transactionId) throws ResourceNotFoundException;

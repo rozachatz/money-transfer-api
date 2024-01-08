@@ -23,7 +23,9 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
     private final TransactionRequestRepository transactionRequestRepository;
     private final TransactionService transactionService;
 
-    /** Processes the TransactionRequest.
+    /**
+     * Processes the TransactionRequest.
+     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount

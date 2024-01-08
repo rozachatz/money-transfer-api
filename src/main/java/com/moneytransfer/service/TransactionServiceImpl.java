@@ -3,7 +3,6 @@ package com.moneytransfer.service;
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
@@ -186,6 +185,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * Get Transaction by id.
+     *
      * @param id
      * @return Transaction
      * @throws ResourceNotFoundException
@@ -201,6 +201,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     /**
      * Get Account by id.
+     *
      * @param id
      * @return Transaction
      * @throws ResourceNotFoundException

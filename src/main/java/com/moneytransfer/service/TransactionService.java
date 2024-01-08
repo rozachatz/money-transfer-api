@@ -1,6 +1,5 @@
 package com.moneytransfer.service;
 
-import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.exceptions.MoneyTransferException;
@@ -16,10 +15,16 @@ import java.util.UUID;
  */
 public interface TransactionService {
     Transaction transferSerializable(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException;
+
     Transaction transferOptimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException;
+
     Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException;
+
     Transaction getTransactionById(UUID id) throws ResourceNotFoundException;
+
     Account getAccountById(UUID id) throws ResourceNotFoundException;
+
     List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
+
     Page<Account> getAccountsWithLimit(int limit);
 }
