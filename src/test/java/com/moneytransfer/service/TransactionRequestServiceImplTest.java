@@ -1,3 +1,7 @@
+/**
+ Test class for {@link com.moneytransfer.service.TransactionRequestService}
+ This test uses embedded h2 db.
+ */
 package com.moneytransfer.service;
 
 import com.beust.ah.A;
@@ -10,6 +14,7 @@ import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionRepository;
 import com.moneytransfer.repository.TransactionRequestRepository;
+import lombok.RequiredArgsConstructor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -29,13 +34,13 @@ import java.util.UUID;
 @ActiveProfiles("test")
 @SpringBootTest
 public class TransactionRequestServiceImplTest {
-    Account sourceAccount, targetAccount;
     @Autowired
     private TransactionRequestServiceImpl transactionRequestServiceImpl;
     @Autowired
     private TransactionRequestRepository transactionRequestRepository;
     @Autowired
     private AccountRepository accountRepository;
+    Account sourceAccount, targetAccount;
     @Before
     public void setup(){
         sourceAccount = new Account(0, UUID.randomUUID(), BigDecimal.valueOf(10), Currency.EUR, LocalDateTime.now());

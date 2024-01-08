@@ -23,7 +23,9 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
     private final TransactionRequestRepository transactionRequestRepository;
     private final TransactionService transactionService;
 
-    /** Processes the TransactionRequest.
+    /**
+     * Processes the TransactionRequest.
+     *
      * @param sourceAccountId
      * @param targetAccountId
      * @param amount
@@ -32,9 +34,9 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
      * @throws MoneyTransferException
      */
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Transaction processRequest(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount, UUID requestId) throws MoneyTransferException {
-        TransactionRequest transactionRequest = getOrCreateTransactionRequest(requestId);
-        String jsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
+    public Transaction processRequest(final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount, final UUID requestId) throws MoneyTransferException {
+        var transactionRequest = getOrCreateTransactionRequest(requestId);
+        var jsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
         return switch (transactionRequest.getRequestStatus()) {
             case SUCCESS -> {
                 validateJson(transactionRequest, jsonBody);
@@ -51,25 +53,26 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
         };
     }
 
-    private TransactionRequest getOrCreateTransactionRequest(UUID requestId) {
+    private TransactionRequest getOrCreateTransactionRequest(final UUID requestId) {
         return transactionRequestRepository.findById(requestId)
-                .orElseGet(() -> transactionRequestRepository.save(new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "", "")));
+                .orElseGet(() -> transactionRequestRepository.save(
+                        new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "", "")));
     }
 
-    private String buildJsonString(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) {
+    private String buildJsonString(final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount) {
         return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
     }
 
-    private void validateJson(TransactionRequest transactionRequest, String jsonBody) throws RequestConflictException {
+    private void validateJson(final TransactionRequest transactionRequest, final String jsonBody) throws RequestConflictException {
         if (!jsonBody.equals(transactionRequest.getJsonBody())) {
-            String errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
+            var errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
             throw new RequestConflictException(errorMessage);
         }
     }
 
-    private Transaction processInProgressRequest(TransactionRequest transactionRequest, UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
+    private Transaction processInProgressRequest(TransactionRequest transactionRequest, final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount) throws MoneyTransferException {
         try {
-            Transaction transaction = transactionService.transferSerializable(sourceAccountId, targetAccountId, amount);
+            var transaction = transactionService.transferSerializable(sourceAccountId, targetAccountId, amount);
             transactionRequest.setTransaction(transaction);
             transactionRequest.setRequestStatus(RequestStatus.SUCCESS);
             return transaction;

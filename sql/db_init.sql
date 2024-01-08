@@ -45,3 +45,11 @@ VALUES ('e4c6f84c-8f92-4f2b-90bb-4352e9379bca', 1000.00, 'EUR', 1);
 -- Insert new account 2
 INSERT INTO accounts (id, balance, currency, version)
 VALUES ('6a7d71f0-6f12-45a6-91a1-198272a09fe8', 750.50, 'EUR', 1);
+
+-- Insert new account 3
+INSERT INTO accounts (id, balance, currency, version)
+VALUES ('e4c6f84c-8f92-4f2b-90bb-4352e9379bcb', 100.00, 'USD', 1);
+
+-- Insert new account 4
+INSERT INTO accounts (id, balance, currency, version)
+VALUES ('6a7d71f0-6f12-45a6-91a1-198272a09fe9', 75.50, 'CAD', 1);

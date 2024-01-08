@@ -3,7 +3,6 @@ package com.moneytransfer.service;
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Currency;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
@@ -52,15 +51,15 @@ public class TransactionServiceImpl implements TransactionService {
      */
     @Transactional
     public Transaction transferOptimistic(
-            UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
+            final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount) throws MoneyTransferException {
+        var transferAccountsDto = getAccountsByIdsOptimistic(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, amount);
     }
 
-    private TransferAccountsDto getAccountsByIdsOptimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
+    private TransferAccountsDto getAccountsByIdsOptimistic(final UUID sourceAccountId, final UUID targetAccountId) throws ResourceNotFoundException {
         return accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
+                    var errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
@@ -75,15 +74,15 @@ public class TransactionServiceImpl implements TransactionService {
      * @throws MoneyTransferException
      */
     @Transactional
-    public Transaction transferPessimistic(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
+    public Transaction transferPessimistic(final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount) throws MoneyTransferException {
+        var transferAccountsDto = getAccountsByIdsPessimistic(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, amount);
     }
 
-    private TransferAccountsDto getAccountsByIdsPessimistic(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
+    private TransferAccountsDto getAccountsByIdsPessimistic(final UUID sourceAccountId, final UUID targetAccountId) throws ResourceNotFoundException {
         return accountRepository.findByIdAndLockPessimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
-                    String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
+                    var errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
@@ -98,12 +97,12 @@ public class TransactionServiceImpl implements TransactionService {
      * @throws MoneyTransferException
      */
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Transaction transferSerializable(UUID sourceAccountId, UUID targetAccountId, BigDecimal amount) throws MoneyTransferException {
-        TransferAccountsDto transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
+    public Transaction transferSerializable(final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount) throws MoneyTransferException {
+        var transferAccountsDto = getAccountsByIds(sourceAccountId, targetAccountId);
         return initiateTransfer(transferAccountsDto, amount);
     }
 
-    private TransferAccountsDto getAccountsByIds(UUID sourceAccountId, UUID targetAccountId) throws ResourceNotFoundException {
+    private TransferAccountsDto getAccountsByIds(final UUID sourceAccountId, final UUID targetAccountId) throws ResourceNotFoundException {
         return accountRepository.findByIds(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
                     String errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
@@ -119,40 +118,40 @@ public class TransactionServiceImpl implements TransactionService {
      * @return new Transaction
      * @throws MoneyTransferException
      */
-    private Transaction initiateTransfer(TransferAccountsDto transferAccountsDto, BigDecimal amount) throws MoneyTransferException {
+    private Transaction initiateTransfer(final TransferAccountsDto transferAccountsDto, final BigDecimal amount) throws MoneyTransferException {
         validateTransfer(transferAccountsDto, amount);
-        Account sourceAccount = transferAccountsDto.getSourceAccount();
-        Account targetAccount = transferAccountsDto.getTargetAccount();
+        var sourceAccount = transferAccountsDto.getSourceAccount();
+        var targetAccount = transferAccountsDto.getTargetAccount();
         performTransfer(sourceAccount, targetAccount, amount);
         accountRepository.saveAll(List.of(sourceAccount, targetAccount));
         return transactionRepository.save(new Transaction(UUID.randomUUID(), sourceAccount, targetAccount, amount, targetAccount.getCurrency()));
     }
 
-    private void performTransfer(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
+    private void performTransfer(final Account sourceAccount, final Account targetAccount, final BigDecimal amount) throws MoneyTransferException {
         sourceAccount.debit(amount);
-        BigDecimal targetAmount = calculateTargetAmount(sourceAccount, targetAccount, amount);
+        var targetAmount = calculateTargetAmount(sourceAccount, targetAccount, amount);
         targetAccount.credit(targetAmount);
     }
 
-    private BigDecimal calculateTargetAmount(Account sourceAccount, Account targetAccount, BigDecimal amount) throws MoneyTransferException {
-        Currency sourceCurrency = sourceAccount.getCurrency();
-        Currency targetCurrency = targetAccount.getCurrency();
+    private BigDecimal calculateTargetAmount(final Account sourceAccount, final Account targetAccount, final BigDecimal amount) throws MoneyTransferException {
+        var sourceCurrency = sourceAccount.getCurrency();
+        var targetCurrency = targetAccount.getCurrency();
         if (sourceCurrency != targetCurrency) {
             return currencyExchangeService.exchangeCurrency(amount, sourceCurrency, targetCurrency);
         }
         return amount;
     }
 
-    private void validateTransfer(TransferAccountsDto accounts, BigDecimal amount) throws MoneyTransferException {
-        UUID sourceAccountId = accounts.getSourceAccount().getId();
-        UUID targetAccountId = accounts.getTargetAccount().getId();
+    private void validateTransfer(final TransferAccountsDto accounts, final BigDecimal amount) throws MoneyTransferException {
+        var sourceAccountId = accounts.getSourceAccount().getId();
+        var targetAccountId = accounts.getTargetAccount().getId();
         if (sourceAccountId == targetAccountId) {  /* AC3: Same Account */
-            String errorMessage = "Transfer in the same account is not allowed. Account ID: " + sourceAccountId + ".";
+            var errorMessage = "Transfer in the same account is not allowed. Account ID: " + sourceAccountId + ".";
             throw new SameAccountException(errorMessage);
         }
         BigDecimal balance = accounts.getSourceAccount().getBalance();
         if (balance.compareTo(amount) < 0) {   /* AC2: Insufficient Balance */
-            String errorMessage = "Insufficient balance in the source account. Account ID:  " + sourceAccountId + ", Requested Amount: " + amount + ", Available Balance: " + balance + ".";
+            var errorMessage = "Insufficient balance in the source account. Account ID:  " + sourceAccountId + ", Requested Amount: " + amount + ", Available Balance: " + balance + ".";
             throw new InsufficientBalanceException(errorMessage);
         }
     }
@@ -163,8 +162,8 @@ public class TransactionServiceImpl implements TransactionService {
      * @param limit
      * @return Accounts
      */
-    public Page<Account> getAccountsWithLimit(int limit) {
-        PageRequest pageRequest = PageRequest.of(0, limit);
+    public Page<Account> getAccountsWithLimit(final int limit) {
+        var pageRequest = PageRequest.of(0, limit);
         return accountRepository.findAll(pageRequest);
     }
 
@@ -176,39 +175,41 @@ public class TransactionServiceImpl implements TransactionService {
      * @return Transactions
      * @throws ResourceNotFoundException
      */
-    public List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException {
+    public List<Transaction> getTransactionByAmountBetween(final BigDecimal minAmount, final BigDecimal maxAmount) throws ResourceNotFoundException {
         return transactionRepository.findByAmountBetween(minAmount, maxAmount)
                 .orElseThrow(() -> {
-                    String errorMessage = "Transactions within the specified range: [" + minAmount + "," + maxAmount + "] were not found.";
+                    var errorMessage = "Transactions within the specified range: [" + minAmount + "," + maxAmount + "] were not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
     /**
      * Get Transaction by id.
+     *
      * @param id
      * @return Transaction
      * @throws ResourceNotFoundException
      */
 
-    public Transaction getTransactionById(UUID id) throws ResourceNotFoundException {
+    public Transaction getTransactionById(final UUID id) throws ResourceNotFoundException {
         return transactionRepository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = "Transaction with ID: " + id + " was not found.";
+                    var errorMessage = "Transaction with ID: " + id + " was not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
     /**
      * Get Account by id.
+     *
      * @param id
      * @return Transaction
      * @throws ResourceNotFoundException
      */
-    public Account getAccountById(UUID id) throws ResourceNotFoundException {
+    public Account getAccountById(final UUID id) throws ResourceNotFoundException {
         return accountRepository.findById(id)
                 .orElseThrow(() -> {
-                    String errorMessage = "Account with ID: " + id + " was not found.";
+                    var errorMessage = "Account with ID: " + id + " was not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
