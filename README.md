@@ -2,40 +2,20 @@
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Acceptance Criteria](#acceptance-criteria)
-- [Requests](#requests)
-- [Idempotency](#idempotency)
-- [API Documentation](#api-documentation)
+- [Documentation](#documentation)
 - [Data Model](#data-model)
 - [Architecture](#architecture)
 - [Testing](#testing)
 - [Docker](#docker)
 
-## Introduction 🦄
-This project includes a simple (yet non-stop evolving 😌) REST microservice for handling financial transactions 💸, built with SpringBoot.  
+## Introduction 
+This project includes a SpringBoot application for handling financial transactions 💸 .  
 Update: Currency exchange is now performed to the transferred amount (if necessary) by fetching the latest exchange rates from "https://freecurrencyapi.com/"! 💱
 
-### Acceptance Criteria
-- AC 1: Happy path
-- AC 2: Insufficient balance
-- AC 3: Transfer in the same account
-- AC 4: Source/target account does not exist
+## Documentation
+Powered by Swagger. Visit "http://localhost:8080/api/swagger-ui/index.html" to explore endpoints and try-out the app! 😊
 
-## Requests 👩🏻‍💻
-````bash
-curl -X POST -H "Content-Type: application/json" -d "{\"sourceAccountId\": \"79360a7e-5249-4822-b3fe-dabfd40b8737\", \"targetAccountId\": \"ef30b8d1-6c5d-4187-b2c4-ab3c640d1b18\", \"amount\": 30.00}" "http://localhost:8080/api/transfer/optimistic"
-````
-A POST request to the endpoint "http://localhost:8080/api/transfer/optimistic" initiates a transfer between two accounts. Option for pessimistic locking is also available by the endpoint "http://localhost:8080/api/transfer/pessimistic".
-
-Caching is also supported for some GET requests, e.g. "http://localhost:8080/api/transactions/{minAmount}/{maxAmount}".
-
-### Idempotency
-This microservice also supports idempotent POST requests via the endpoint: "http://localhost:8080/api/transfer/request/{requestId}".
-
-## API Documentation 📄
-Visit "http://localhost:8080/api/swagger-ui/index.html" to explore endpoints and try-out the app! 😊
-
-## Data Model 📌
+## Data Model
 ### Account
 The Account entity represents a bank account with the following properties:
 
@@ -68,37 +48,45 @@ The TransactionRequest entity provides idempotent behavior for POST transfer req
 | requestStatus         | Status of the TransactionRequest                     |
 | jsonBody              | String representation of the jsonBody of the request |
 
-## Architecture 🏢
+## Architecture
 ### Controller
-Exposes the endpoints of the application, processes the HTTP requests and sends the appropriate response to the client.
+- TransactionController
 
 ### Data Transfer Objects (Dtos)
 Container classes, read-only purposes.
 
-### Service
+### Services
 #### TransactionRequestService
 Business Logic for executing a request for a financial transaction.
 
 #### TransactionService
 Business logic for performing a financial transactions between two accounts.
 
-### Repository
-JPA
+#### CurrencyExchangeService
+Business logic for performing currency exchange.
 
-### Entity
+### Entities
 - TransactionRequest
 - Transaction
 - Account
 
+### Repositories
+JPA repository for each entity.
+
 ### Exceptions
 - Custom exceptions
-- GlobalAPIExceptionHandler returns the appropriate HTTP status for each custom exception
-
-## Testing 🧐
+- GlobalAPIExceptionHandler returns the appropriate HTTP status for each custom exception.
+  
+## Testing
 At the moment, integration tests for services are provided. More to come, as the app progresses! 
-
 *Note: Integration tests use H2 embedded db.*
 
+### Acceptance Criteria
+- AC 1: Happy path
+- AC 2: Insufficient balance
+- AC 3: Transfer in the same account
+- AC 4: Source/target account does not exist
+  
 ## Docker
 The app and (Postgres) db are now dockerized! ❤️ Let the magic happen by executing the following commands:
 
