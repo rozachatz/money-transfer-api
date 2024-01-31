@@ -29,7 +29,7 @@ CREATE TABLE transaction_requests (
     request_id UUID PRIMARY KEY,
     transaction_id UUID,
     REQUEST_STATUS SMALLINT,
-    JSON_BODY TEXT,
+    HASHED_PAYLOAD INT,
     ERROR_MESSAGE TEXT
 );
 

@@ -28,7 +28,7 @@ public class TransactionRequest {
     @JoinColumn(name = "transaction_id", referencedColumnName = "id")
     private Transaction transaction;
     private RequestStatus requestStatus;
-    private String jsonBody;
+    private int hashedPayload;
     private String errorMessage;
 
     @Override

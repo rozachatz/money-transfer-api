@@ -36,18 +36,18 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction processRequest(final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount, final UUID requestId) throws MoneyTransferException {
         var transactionRequest = getOrCreateTransactionRequest(requestId);
-        var jsonBody = buildJsonString(sourceAccountId, targetAccountId, amount);
+        var currHashedPayload = buildJsonString(sourceAccountId, targetAccountId, amount).hashCode();
         return switch (transactionRequest.getRequestStatus()) {
             case SUCCESS -> {
-                validateJson(transactionRequest, jsonBody);
+                validatePayload(transactionRequest, currHashedPayload);
                 yield transactionRequest.getTransaction();
             }
             case IN_PROGRESS -> {
-                transactionRequest.setJsonBody(jsonBody);
+                transactionRequest.setHashedPayload(currHashedPayload);
                 yield processInProgressRequest(transactionRequest, sourceAccountId, targetAccountId, amount);
             }
             case FAILED -> {
-                validateJson(transactionRequest, jsonBody);
+                validatePayload(transactionRequest, currHashedPayload);
                 throw new RequestConflictException(transactionRequest.getErrorMessage());
             }
         };
@@ -56,15 +56,15 @@ public class TransactionRequestServiceImpl implements TransactionRequestService 
     private TransactionRequest getOrCreateTransactionRequest(final UUID requestId) {
         return transactionRequestRepository.findById(requestId)
                 .orElseGet(() -> transactionRequestRepository.save(
-                        new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "", "")));
+                        new TransactionRequest(requestId, null, RequestStatus.IN_PROGRESS, "".hashCode(), "")));
     }
 
     private String buildJsonString(final UUID sourceAccountId, final UUID targetAccountId, final BigDecimal amount) {
         return sourceAccountId.toString() + targetAccountId.toString() + amount.stripTrailingZeros();
     }
 
-    private void validateJson(final TransactionRequest transactionRequest, final String jsonBody) throws RequestConflictException {
-        if (!jsonBody.equals(transactionRequest.getJsonBody())) {
+    private void validatePayload(final TransactionRequest transactionRequest, final int currHashedPayload) throws RequestConflictException {
+        if (currHashedPayload != transactionRequest.getHashedPayload()) {
             var errorMessage = "The JSON body does not match with request ID " + transactionRequest.getRequestId() + ".";
             throw new RequestConflictException(errorMessage);
         }
