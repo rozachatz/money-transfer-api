@@ -1,8 +1,10 @@
 package com.moneytransfer.enums;
+
 /*
     All supported currencies
  */
 public enum Currency {
+    NOT_DEFINED,
     AUD,
     BGN,
     BRL,
@@ -35,5 +37,5 @@ public enum Currency {
     THB,
     TRY,
     USD,
-    ZAR;
+    ZAR
 }

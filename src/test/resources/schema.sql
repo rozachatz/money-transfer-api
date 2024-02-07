@@ -1,5 +1,6 @@
 CREATE TABLE accounts (
     id UUID PRIMARY KEY,
+    owner_name VARCHAR(20),
     balance DECIMAL(19, 4),
     currency VARCHAR(255),
     CREATED_AT TIMESTAMP,
@@ -11,7 +12,10 @@ CREATE TABLE transactions (
     source_account_id UUID,
     target_account_id UUID,
     amount DECIMAL(19, 4),
-    currency VARCHAR(255)
+    currency VARCHAR(255),
+    STATUS SMALLINT,
+    MESSAGE VARCHAR(255),
+    HASHED_PAYLOAD INT
 );
 
 ALTER TABLE transactions
@@ -24,16 +28,3 @@ ADD CONSTRAINT FK_target_account
 FOREIGN KEY (target_account_id)
 REFERENCES accounts(id);
 
-
-CREATE TABLE transaction_requests (
-    request_id UUID PRIMARY KEY,
-    transaction_id UUID,
-    REQUEST_STATUS SMALLINT,
-    HASHED_PAYLOAD INT,
-    ERROR_MESSAGE TEXT
-);
-
-ALTER TABLE transaction_requests
-ADD CONSTRAINT FK_transaction
-FOREIGN KEY (transaction_id)
-REFERENCES transactions(id);

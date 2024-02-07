@@ -22,6 +22,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Account {
+    protected String ownerName;
     @Version
     protected int version;
     @Id

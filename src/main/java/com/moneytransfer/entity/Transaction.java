@@ -1,6 +1,8 @@
 package com.moneytransfer.entity;
 
+import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.enums.Currency;
+import com.moneytransfer.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Entity that represents successful money transfers between two {@link Account}
+ * Entity that represents a transaction between two {@link Account} entities.
  */
 @Entity
 @Table(name = "transactions")
@@ -22,17 +24,21 @@ public class Transaction {
     @Id
     private UUID id;
 
+    private RequestStatus status;
     @ManyToOne()
     @JoinColumn(name = "source_account_id", referencedColumnName = "id")
     private Account sourceAccount;
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "target_account_id", referencedColumnName = "id")
     private Account targetAccount;
 
     private BigDecimal amount;
 
-    @Enumerated(EnumType.STRING)
+    private String message;
+
+    private int hashedPayload;
+
     private Currency currency;
 
     @Override

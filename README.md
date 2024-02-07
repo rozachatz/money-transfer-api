@@ -93,7 +93,7 @@ The app and (Postgres) db are now dockerized! ❤️ Let the magic happen by exe
 **First-time setup:**
 ````bash
 docker compose up db --build
-docker compose up app --build
+docker compose up --build
 ````
 Note: allow database setup to complete before starting the app container.
 

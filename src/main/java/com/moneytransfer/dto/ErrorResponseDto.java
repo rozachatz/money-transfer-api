@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Dto for Exceptions
+ * Dto for logging and exception handling
  */
 @Getter
 @AllArgsConstructor

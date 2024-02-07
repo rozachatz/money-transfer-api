@@ -1,5 +1,6 @@
 package com.moneytransfer.dto;
 
+import com.moneytransfer.entity.Account;
 import com.moneytransfer.enums.Currency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * Dto for {@link com.moneytransfer.entity.Account}
+ * Dto that retains information for an {@link Account} entity.
  */
 @Getter
 @AllArgsConstructor

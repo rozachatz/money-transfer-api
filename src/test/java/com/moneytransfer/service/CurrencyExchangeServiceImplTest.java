@@ -1,5 +1,5 @@
 /**
- Test class for {@link com.moneytransfer.service.CurrencyExchangeServiceImpl}
+ * Test class for {@link com.moneytransfer.service.CurrencyExchangeServiceImpl}
  */
 package com.moneytransfer.service;
 
@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -19,12 +18,11 @@ import java.math.BigDecimal;
 @SpringBootTest(classes = {CurrencyExchangeServiceImpl.class})
 @RequiredArgsConstructor
 public class CurrencyExchangeServiceImplTest {
-    @Autowired
     private CurrencyExchangeServiceImpl currencyExchangeServiceImpl;
 
     @Test
     public void testAPI_Exchange() throws MoneyTransferException {
         BigDecimal amount = currencyExchangeServiceImpl.exchangeCurrency(BigDecimal.valueOf(10), Currency.EUR, Currency.CAD);
-        Assert.assertTrue(amount.compareTo(BigDecimal.ZERO)>0);
+        Assert.assertTrue(amount.compareTo(BigDecimal.ZERO) > 0);
     }
 }

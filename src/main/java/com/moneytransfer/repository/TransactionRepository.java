@@ -10,5 +10,4 @@ import java.util.UUID;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     Optional<List<Transaction>> findByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount);
-
 }
