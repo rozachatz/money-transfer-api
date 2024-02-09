@@ -1,6 +1,5 @@
 package com.moneytransfer.entity;
 
-import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.enums.Currency;
 import com.moneytransfer.enums.RequestStatus;
 import jakarta.persistence.*;
@@ -25,7 +24,7 @@ public class Transaction {
     private UUID id;
 
     private RequestStatus status;
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "source_account_id", referencedColumnName = "id")
     private Account sourceAccount;
 

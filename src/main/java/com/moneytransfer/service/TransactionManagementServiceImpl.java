@@ -139,11 +139,11 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
      * @return errorMessage
      */
     private String getErrorMessage(Exception e) {
-        String errorMessage = e.getMessage();
         if (e instanceof ConcurrencyFailureException) {
-            errorMessage = "Another transaction has attempted to concurrently access the same account resources. Please try submitting a new request.";
+            return "Concurrent modification error: Another transaction in progress has attempted to concurrently modify the same resources. Please try re-submitting the request.";
         }
-        return errorMessage;
+        return e.getMessage();
+
     }
 
     /**
