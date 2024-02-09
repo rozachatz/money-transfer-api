@@ -3,7 +3,7 @@ package com.moneytransfer.controller;
 import com.moneytransfer.dto.GetAccountDto;
 import com.moneytransfer.dto.GetTransferDto;
 import com.moneytransfer.dto.NewTransferDto;
-import com.moneytransfer.enums.Type;
+import com.moneytransfer.enums.ConcurrencyControlMode;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,7 +64,7 @@ public interface MoneyTransferAPIController {
                             content = @Content)
 
             })
-    ResponseEntity<GetTransferDto> transferRequest(@Parameter(description = "The accounts and the amount that will be transferred from source to target account.", required = true) NewTransferDto newTransferDTO, @Parameter(description = "Unique identifier for the request.", required = true) UUID requestId, @Parameter(description = "Isolation/locking type of the transaction request.", required = true) Type type) throws MoneyTransferException;
+    ResponseEntity<GetTransferDto> transferRequest(@Parameter(description = "The accounts and the amount that will be transferred from source to target account.", required = true) NewTransferDto newTransferDTO, @Parameter(description = "Unique identifier for the request.", required = true) UUID requestId, @Parameter(description = "Enforces serializable isolation or pessimistic/optimistic locking, depending on its value.", required = true) ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
 
     @Operation(summary = "Gets all transactions with amount in the given range.")
     @ApiResponses(

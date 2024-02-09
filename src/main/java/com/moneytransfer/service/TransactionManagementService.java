@@ -2,7 +2,7 @@ package com.moneytransfer.service;
 
 import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Type;
+import com.moneytransfer.enums.ConcurrencyControlMode;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,7 @@ import java.util.UUID;
  * Service that processes a TransactionRequest and fetches Transactions
  */
 public interface TransactionManagementService {
-    Transaction processRequest(NewTransferDto transferDto, UUID transferRequestId, Type type) throws MoneyTransferException;
+    Transaction processRequest(NewTransferDto transferDto, UUID transferRequestId, ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
 
     Transaction getTransactionById(UUID requestId) throws ResourceNotFoundException;
 

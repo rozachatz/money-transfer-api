@@ -86,7 +86,7 @@ public class AccountManagementServiceImpl implements AccountManagementService {
      */
 
     public TransferAccountsDto getAccountsByIdsOptimistic(final UUID sourceAccountId, final UUID targetAccountId) throws ResourceNotFoundException {
-        return accountRepository.findByIds(sourceAccountId, targetAccountId)
+        return accountRepository.findByIdAndLockOptimistic(sourceAccountId, targetAccountId)
                 .orElseThrow(() -> {
                     var errorMessage = "Source/target account not found. Source Account ID: " + sourceAccountId + ", Target Account ID: " + targetAccountId + ".";
                     return new ResourceNotFoundException(errorMessage);

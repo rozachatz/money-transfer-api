@@ -5,7 +5,7 @@ import com.moneytransfer.dto.GetTransferDto;
 import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
-import com.moneytransfer.enums.Type;
+import com.moneytransfer.enums.ConcurrencyControlMode;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.service.AccountManagementService;
@@ -32,12 +32,12 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
     private final TransactionManagementService transactionManagementService;
 
 
-    @PostMapping("/transaction/request/{requestId}/{type}")
-    public ResponseEntity<GetTransferDto> transferRequest(@RequestBody NewTransferDto newTransferDto, @PathVariable UUID requestId, @PathVariable Type type) throws MoneyTransferException {
+    @PostMapping("/transaction/request/{requestId}/{concurrencyControlMode}")
+    public ResponseEntity<GetTransferDto> transferRequest(@RequestBody NewTransferDto newTransferDto, @PathVariable UUID requestId, @PathVariable ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
         Transaction transaction = transactionManagementService.processRequest(
                 newTransferDto,
                 requestId,
-                type);
+                concurrencyControlMode);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
