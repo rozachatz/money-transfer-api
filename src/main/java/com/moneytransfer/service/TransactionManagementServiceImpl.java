@@ -2,10 +2,10 @@ package com.moneytransfer.service;
 
 import com.moneytransfer.component.BuildHashedPayloadFunction;
 import com.moneytransfer.dto.NewTransferDto;
-import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.ConcurrencyControlMode;
-import com.moneytransfer.enums.RequestStatus;
+import com.moneytransfer.enums.TransactionStatus;
+import com.moneytransfer.exceptions.GlobalAPIExceptionHandler;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.RequestConflictException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,10 +28,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionManagementServiceImpl implements TransactionManagementService {
     /**
-     * The transaction repository.
-     */
-    private final TransactionRepository transactionRepository;
-    /**
      * The money  transfer service.
      */
     private final MoneyTransferService moneyTransferService;
@@ -38,6 +35,10 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
      * The account management service.
      */
     private final AccountManagementService accountManagementService;
+    /**
+     * The transaction repository.
+     */
+    private final TransactionRepository transactionRepository;
     /**
      * The function for building hashed payload.
      */
@@ -71,106 +72,60 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
     }
 
     /**
-     * Gets {@link Transaction} by requestId.
+     * Gets {@link Transaction} by id.
      *
-     * @param requestId
+     * @param id
      * @return Transaction
      * @throws ResourceNotFoundException
      */
-
-    public Transaction getTransactionById(final UUID requestId) throws ResourceNotFoundException {
-        return transactionRepository.findById(requestId)
+    public Transaction getTransactionById(final UUID id) throws ResourceNotFoundException {
+        return transactionRepository.findById(id)
                 .orElseThrow(() -> {
-                    var errorMessage = "Transaction with requestId: " + requestId + " was not found.";
+                    var errorMessage = "Transaction with id: " + id + " was not found.";
                     return new ResourceNotFoundException(errorMessage);
                 });
     }
 
     /**
-     * Processes the request for a new {@link Transaction}.
+     * Processes the request for a {@link Transaction}.
      *
      * @param newTransferDto
-     * @param requestId
+     * @param id
      * @return Transaction
      * @throws MoneyTransferException
      */
-    public Transaction processRequest(final NewTransferDto newTransferDto, final UUID requestId, final ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
-        RequestStatus status = getTransactionStatus(requestId);
-        return switch (status) {
-            case IN_PROGRESS -> processInProgressRequest(requestId, newTransferDto, concurrencyControlMode);
-            case SUCCESS -> validateRequestAndGet(requestId, newTransferDto);
-            case FAILED -> validateRequestAndThrow(requestId, newTransferDto);
+    public Transaction processRequest(final UUID id, final NewTransferDto newTransferDto, final ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
+        var transactionStatus = getTransactionStatusById(id);
+        return switch (transactionStatus) {
+            case SUCCESS -> validateRequestAndGet(id, newTransferDto);
+            case FAILED -> validateRequestAndThrow(id, newTransferDto);
+            case IN_PROGRESS -> processInProgressRequest(id, newTransferDto, concurrencyControlMode);
         };
     }
 
     /**
-     * Get associated {@link RequestStatus} if {@link Transaction} exists or return IN_PROGRESS.
+     * Gets the associated {@link TransactionStatus} by id.
      *
-     * @param requestId
-     * @return the status of the Transaction
+     * @param id
+     * @return the Transaction status
      */
-    private RequestStatus getTransactionStatus(final UUID requestId) {
-        return transactionRepository.findById(requestId).map(Transaction::getStatus).orElse(RequestStatus.IN_PROGRESS);
+    private TransactionStatus getTransactionStatusById(final UUID id) {
+        return transactionRepository.findById(id)
+                .map(Transaction::getTransactionStatus).orElse(TransactionStatus.IN_PROGRESS);
     }
 
     /**
-     * Process the {@link Transaction} in progress
+     * Validates idempotency and returns the associated {@link Transaction}.
      *
-     * @param requestId
-     * @param newTransferDto
-     * @param concurrencyControlMode
-     * @return the Transaction
-     * @throws MoneyTransferException
-     */
-    private Transaction processInProgressRequest(final UUID requestId, final NewTransferDto newTransferDto, final ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
-        try {
-            return persistSuccessfulTransaction(requestId, concurrencyControlMode, newTransferDto);
-        } catch (MoneyTransferException | RuntimeException e) {
-            persistFailedTransaction(requestId, newTransferDto, getErrorMessage(e));
-            throw e;
-        }
-    }
-
-    /**
-     * Gets the error message
-     * if the Transaction has failed.
-     *
-     * @param e
-     * @return errorMessage
-     */
-    private String getErrorMessage(Exception e) {
-        if (e instanceof ConcurrencyFailureException) {
-            return "Concurrent modification error: Another transaction in progress has attempted to concurrently modify the same resources. Please try re-submitting the request.";
-        }
-        return e.getMessage();
-
-    }
-
-    /**
-     * Validates idempotency and returns the associated {@link Transaction}
-     *
-     * @param requestId
+     * @param id
      * @param newTransferDto
      * @return the Transaction
      * @throws MoneyTransferException
      */
-    private Transaction validateRequestAndGet(UUID requestId, NewTransferDto newTransferDto) throws MoneyTransferException {
-        Transaction transaction = getTransactionById(requestId);
+    private Transaction validateRequestAndGet(final UUID id, final NewTransferDto newTransferDto) throws MoneyTransferException {
+        var transaction = getTransactionById(id);
         validateIdempotent(transaction, newTransferDto);
         return transaction;
-    }
-
-    /**
-     * Validates idempotency and throws a {@link RequestConflictException} with the appropriate error message.
-     *
-     * @param requestId
-     * @param newTransferDto
-     * @return
-     * @throws MoneyTransferException
-     */
-    private Transaction validateRequestAndThrow(UUID requestId, NewTransferDto newTransferDto) throws MoneyTransferException {
-        Transaction transaction = validateRequestAndGet(requestId, newTransferDto);
-        throw new RequestConflictException(transaction.getMessage());
     }
 
     /**
@@ -182,41 +137,100 @@ public class TransactionManagementServiceImpl implements TransactionManagementSe
      */
     private void validateIdempotent(final Transaction transaction, final NewTransferDto newTransferDto) throws RequestConflictException {
         if (buildHashedPayloadFunction.apply(newTransferDto) != transaction.getHashedPayload()) {
-            var errorMessage = "The JSON body does not match with request requestId " + transaction.getId() + ".";
+            var errorMessage = "The JSON body does not match with request id " + transaction.getId() + ".";
             throw new RequestConflictException(errorMessage);
+        }
+    }
+
+    /**
+     * Validates idempotency and throws a {@link RequestConflictException} with the appropriate error message.
+     *
+     * @param id
+     * @param newTransferDto
+     * @throws MoneyTransferException
+     */
+    private Transaction validateRequestAndThrow(final UUID id, final NewTransferDto newTransferDto) throws MoneyTransferException {
+        var transaction = validateRequestAndGet(id, newTransferDto);
+        throw new RequestConflictException(transaction.getMessage(), transaction.getHttpStatus());
+    }
+
+    /**
+     * Processes the {@link Transaction} in progress.
+     *
+     * @param id
+     * @param newTransferDto
+     * @param concurrencyControlMode
+     * @return the Transaction
+     * @throws MoneyTransferException
+     */
+    private Transaction processInProgressRequest(final UUID id, final NewTransferDto newTransferDto, final ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
+        try {
+            return persistSuccessfulTransaction(id, concurrencyControlMode, newTransferDto);
+        } catch (MoneyTransferException | RuntimeException e) {
+            persistFailedTransaction(id, newTransferDto, e);
+            throw e;
         }
     }
 
     /**
      * Persists the successful {@link Transaction}.
      *
-     * @param requestId
+     * @param id
      * @param concurrencyControlMode
      * @param newTransferDto
-     * @return the Transaction
+     * @return the new successful Transaction
      * @throws MoneyTransferException
      */
-    private Transaction persistSuccessfulTransaction(final UUID requestId, final ConcurrencyControlMode concurrencyControlMode, final NewTransferDto newTransferDto) throws MoneyTransferException {
+    private Transaction persistSuccessfulTransaction(final UUID id, final ConcurrencyControlMode concurrencyControlMode, final NewTransferDto newTransferDto) throws MoneyTransferException {
         return switch (concurrencyControlMode) {
-            case OPTIMISTIC_LOCKING -> moneyTransferService.transferOptimistic(requestId, newTransferDto);
-            case PESSIMISTIC_LOCKING -> moneyTransferService.transferPessimistic(requestId, newTransferDto);
-            case SERIALIZABLE_ISOLATION -> moneyTransferService.transferSerializable(requestId, newTransferDto);
+            case OPTIMISTIC_LOCKING -> moneyTransferService.transferOptimistic(id, newTransferDto);
+            case PESSIMISTIC_LOCKING -> moneyTransferService.transferPessimistic(id, newTransferDto);
+            case SERIALIZABLE_ISOLATION -> moneyTransferService.transferSerializable(id, newTransferDto);
         };
     }
 
     /**
      * Persists the failed {@link Transaction}.
      *
-     * @param requestId
+     * @param id
      * @param newTransferDto
-     * @param message
+     * @param e
      * @throws ResourceNotFoundException
      */
-    private void persistFailedTransaction(final UUID requestId, final NewTransferDto newTransferDto, final String message) throws ResourceNotFoundException {
-        Account targetAccount = accountManagementService.getAccountByIdOrReturnDefault(newTransferDto.targetAccountId());
-        Account sourceAccount = accountManagementService.getAccountByIdOrReturnDefault(newTransferDto.sourceAccountId());
-        Transaction transaction = new Transaction(requestId, RequestStatus.FAILED, sourceAccount, targetAccount, newTransferDto.amount(), message, buildHashedPayloadFunction.apply(newTransferDto), sourceAccount.getCurrency());
-        transactionRepository.save(transaction);
+    private void persistFailedTransaction(final UUID id, final NewTransferDto newTransferDto, final Exception e) throws ResourceNotFoundException {
+        var targetAccount = accountManagementService.getAccountByIdOrReturnDefault(newTransferDto.targetAccountId());
+        var sourceAccount = accountManagementService.getAccountByIdOrReturnDefault(newTransferDto.sourceAccountId());
+        var httpStatus = getFailedHttpStatus(e);
+        var hashedPayload = buildHashedPayloadFunction.apply(newTransferDto);
+        var errorMessage = getErrorMessage(e);
+        var currency = sourceAccount.getCurrency();
+        transactionRepository.save(new Transaction(id, TransactionStatus.FAILED, sourceAccount, targetAccount, newTransferDto.amount(), errorMessage, hashedPayload, currency, httpStatus));
+    }
+
+    /**
+     * Gets the {@link HttpStatus} for the failed {@link Transaction}.
+     *
+     * @param e
+     * @return the generic or specific http_status
+     */
+    private HttpStatus getFailedHttpStatus(Exception e) {
+        if (e instanceof MoneyTransferException) {
+            return ((MoneyTransferException) e).getHttpStatus();
+        }
+        return GlobalAPIExceptionHandler.GENERIC_ERROR_HTTP_STATUS;
+    }
+
+    /**
+     * Gets the error message for the failed {@link Transaction}.
+     *
+     * @param e
+     * @return the error message
+     */
+    private String getErrorMessage(final Exception e) {
+        if (e instanceof ConcurrencyFailureException) {
+            return "Concurrent modification error: Another transaction in progress has attempted to concurrently modify the same resources. Please try re-submitting a new request.";
+        }
+        return e.getMessage();
     }
 
 }

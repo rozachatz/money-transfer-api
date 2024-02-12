@@ -9,11 +9,10 @@ import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.ConcurrencyControlMode;
 import com.moneytransfer.enums.Currency;
-import com.moneytransfer.enums.RequestStatus;
-import com.moneytransfer.exceptions.InsufficientBalanceException;
+import com.moneytransfer.enums.TransactionStatus;
+import com.moneytransfer.exceptions.GlobalAPIExceptionHandler;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.RequestConflictException;
-import com.moneytransfer.exceptions.ResourceNotFoundException;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionRepository;
 import org.junit.Before;
@@ -21,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -69,12 +69,15 @@ public class TransactionManagementServiceImplTest {
      * @throws MoneyTransferException
      */
     @Test
-    public void testFailedRequest() {
-        BigDecimal amount = sourceAccount.getBalance();
-        UUID nonExistentAccountId = UUID.randomUUID();
-        UUID requestId = UUID.randomUUID();
-        assertThrows(ResourceNotFoundException.class, () -> transactionManagementService.processRequest(new NewTransferDto(sourceAccount.getId(), nonExistentAccountId, amount), requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
-        checkTransactionPersistedAndStatus(requestId, RequestStatus.FAILED);
+    public void testPersisted_FailedRequest() {
+        var amount = sourceAccount.getBalance();
+        var nonExistentAccountId = UUID.randomUUID();
+        var id = UUID.randomUUID();
+        var newTransferDto = new NewTransferDto(sourceAccount.getId(), nonExistentAccountId, amount);
+        assertThrows(MoneyTransferException.class, () -> transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
+        Optional<Transaction> retrievedTransaction = transactionRepository.findById(id);
+        assertTrue(retrievedTransaction.isPresent());
+        assertEquals(retrievedTransaction.get().getTransactionStatus(), TransactionStatus.FAILED);
     }
 
     /**
@@ -83,73 +86,61 @@ public class TransactionManagementServiceImplTest {
      * @throws MoneyTransferException
      */
     @Test
-    public void testSuccessfulRequest() throws MoneyTransferException {
-        BigDecimal amount = sourceAccount.getBalance();
-        UUID requestId = UUID.randomUUID();
-        transactionManagementService.processRequest(new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount), requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
-        checkTransactionPersistedAndStatus(requestId, RequestStatus.SUCCESS);
+    public void testPersisted_SuccessfulRequest() throws MoneyTransferException {
+        var amount = sourceAccount.getBalance();
+        var id = UUID.randomUUID();
+        var newTransferDto = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
+        var transaction = transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
+        assertEquals(transaction.getHttpStatus(), GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
+        assertEquals(transaction.getTransactionStatus(), TransactionStatus.SUCCESS);
     }
 
     /**
      * Checks the idempotent behavior of a transfer request.
-     * For a successful {@link Transaction}, objects returned should be identical.
      *
      * @throws MoneyTransferException
      */
     @Test
-    public void testSuccessfulRequest_IdempotentBehavior() throws MoneyTransferException {
-        UUID requestId = UUID.randomUUID();
-        BigDecimal amount = sourceAccount.getBalance();
-        NewTransferDto newTransferDto = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
-        Transaction transaction1 = transactionManagementService.processRequest(newTransferDto, requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
-        Transaction transaction2 = transactionManagementService.processRequest(newTransferDto, requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
+    public void testIdempotent_SuccessfulRequest() throws MoneyTransferException {
+        var id = UUID.randomUUID();
+        var amount = sourceAccount.getBalance();
+        var newTransferDto = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
+        var transaction1 = transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
+        var transaction2 = transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
         assertEquals(transaction1, transaction2);
         assertEquals(transaction1.hashCode(), transaction2.hashCode());
+        assertEquals(transaction1.getHttpStatus(), GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
+        assertEquals(transaction1.getTransactionStatus(), TransactionStatus.SUCCESS);
     }
 
     /**
      * Checks the idempotent behavior of a failed transfer request.
-     * For a successful {@link Transaction}, objects returned should be identical.
+     */
+    @Test
+    public void testIdempotent_FailedRequest() {
+        var id = UUID.randomUUID();
+        var amount = sourceAccount.getBalance().multiply(BigDecimal.TEN);
+        var newTransferDto = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
+        var exception1 = assertThrows(MoneyTransferException.class, () -> transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
+        var exception2 = assertThrows(MoneyTransferException.class, () -> transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
+        assertEquals(exception2.getMessage(), exception1.getMessage());
+        assertEquals(exception2.getHttpStatus(), exception1.getHttpStatus());
+    }
+
+    /**
+     * Checks the idempotent behavior of a transfer request regarding the payload.
      *
      * @throws MoneyTransferException
      */
     @Test
-    public void testFailedRequest_IdempotentBehavior() {
-        UUID requestId = UUID.randomUUID();
-        BigDecimal amount = sourceAccount.getBalance().multiply(BigDecimal.TEN);
-        NewTransferDto newTransferDto = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
-        assertThrows(InsufficientBalanceException.class, () -> transactionManagementService.processRequest(newTransferDto, requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
-        assertThrows(RequestConflictException.class, () -> transactionManagementService.processRequest(newTransferDto, requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
+    public void testIdempotent_PayloadMismatch() throws MoneyTransferException {
+        var initialBalance = sourceAccount.getBalance();
+        var transactionId = UUID.randomUUID();
+        var newTransferDto1 = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), initialBalance);
+        var newTransferDto2 = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ZERO);
+        transactionManagementService.processRequest(transactionId, newTransferDto1, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
+        var exception = assertThrows(RequestConflictException.class, () -> transactionManagementService.processRequest(transactionId, newTransferDto2, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
+        assertTrue(exception.getMessage().contains("The JSON body does not match"));
+        assertEquals(exception.getHttpStatus(), HttpStatus.CONFLICT);
     }
-
-    /**
-     * Checks the idempotent behavior of a successful transfer request.
-     * The payload of the request should remain the same.
-     *
-     * @throws MoneyTransferException
-     */
-    @Test
-    public void testRequests_WrongPayload() throws MoneyTransferException {
-        BigDecimal amount = sourceAccount.getBalance();
-        UUID requestId = UUID.randomUUID();
-        NewTransferDto newTransferDto1 = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
-        NewTransferDto newTransferDto2 = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), BigDecimal.ZERO);
-        transactionManagementService.processRequest(newTransferDto1, requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
-        assertThrows(RequestConflictException.class, () -> transactionManagementService.processRequest(newTransferDto2, requestId, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
-    }
-
-
-    /**
-     * Checks that the {@link Transaction} with the given id is persisted
-     * and has the given status.
-     *
-     * @param requestId
-     * @param status
-     */
-    private void checkTransactionPersistedAndStatus(UUID requestId, RequestStatus status) {
-        Optional<Transaction> retrievedTransaction = transactionRepository.findById(requestId);
-        assertTrue(retrievedTransaction.isPresent());
-        assertEquals(retrievedTransaction.get().getStatus(), status);
-    }
-
 }

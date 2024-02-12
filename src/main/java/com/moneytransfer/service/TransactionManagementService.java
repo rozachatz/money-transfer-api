@@ -15,9 +15,9 @@ import java.util.UUID;
  * Service that processes a TransactionRequest and fetches Transactions
  */
 public interface TransactionManagementService {
-    Transaction processRequest(NewTransferDto transferDto, UUID transferRequestId, ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
+    Transaction processRequest(UUID id, NewTransferDto transferDto, ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
 
-    Transaction getTransactionById(UUID requestId) throws ResourceNotFoundException;
+    Transaction getTransactionById(UUID id) throws ResourceNotFoundException;
 
     List<Transaction> getTransactionByAmountBetween(BigDecimal minAmount, BigDecimal maxAmount) throws ResourceNotFoundException;
 

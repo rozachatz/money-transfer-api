@@ -7,7 +7,7 @@ import com.moneytransfer.exceptions.MoneyTransferException;
 import java.util.UUID;
 
 /**
- * Service that performs the money transfer operation
+ * Service that performs the money transfer and persists the associated Transaction.
  */
 interface MoneyTransferService {
     Transaction transferSerializable(UUID id, NewTransferDto transferDto) throws MoneyTransferException;

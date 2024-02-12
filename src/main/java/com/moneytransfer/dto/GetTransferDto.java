@@ -2,7 +2,7 @@ package com.moneytransfer.dto;
 
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.Currency;
-import com.moneytransfer.enums.RequestStatus;
+import com.moneytransfer.enums.TransactionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -19,7 +19,7 @@ public class GetTransferDto {
     private UUID sourceAccountId;
     private UUID targetAccountId;
     private BigDecimal amount;
-    private RequestStatus status;
+    private TransactionStatus status;
     private Currency currency;
 }
 

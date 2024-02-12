@@ -23,6 +23,15 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
     @Value("${freecurrencyapi.apiUrl}")
     private String apiUrl;
 
+    /**
+     * Performs the currency exchange.
+     *
+     * @param amount
+     * @param sourceCurrency
+     * @param targetCurrency
+     * @return
+     * @throws MoneyTransferException
+     */
     public BigDecimal exchangeCurrency(BigDecimal amount, final Currency sourceCurrency, final Currency targetCurrency) throws MoneyTransferException {
         var subUrl = apiUrl.concat(apiKey);
         var url = String.format("%1$s&currencies=%2$s&base_currency=%3$s", subUrl, targetCurrency.name(), sourceCurrency.name());

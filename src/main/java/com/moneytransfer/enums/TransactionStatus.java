@@ -1,6 +1,6 @@
 package com.moneytransfer.enums;
 
-public enum RequestStatus {
+public enum TransactionStatus {
     SUCCESS,
     IN_PROGRESS,
     FAILED

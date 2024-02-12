@@ -8,7 +8,7 @@ import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.entity.Account;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.Currency;
-import com.moneytransfer.enums.RequestStatus;
+import com.moneytransfer.enums.TransactionStatus;
 import com.moneytransfer.exceptions.InsufficientBalanceException;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
@@ -86,76 +87,78 @@ public class MoneyTransferServiceImplTest {
     }
 
     /**
-     * Happy path test
+     * Happy path
+     *
      * @throws MoneyTransferException
      */
     @Test
     public void testHappyPath() throws MoneyTransferException {
-        BigDecimal amount = sourceAccount.getBalance();
-        UUID requestId = UUID.randomUUID();
-        transactionService.transferSerializable(requestId, new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount));
-        BigDecimal expectedSourceBalance = sourceAccount.getBalance().subtract(amount);
-        BigDecimal actualSourceBalance = retrievePersistedAccountBalance(sourceAccount.getId());
+        var amount = sourceAccount.getBalance();
+        var transactionId = UUID.randomUUID();
+        var expectedSourceBalance = sourceAccount.getBalance().subtract(amount);
+        var expectedTargetBalance = targetAccount.getBalance().add(amount);
+        transactionService.transferSerializable(transactionId, new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount));
+        var actualSourceBalance = retrievePersistedBalance(sourceAccount.getId());
         assertEquals(actualSourceBalance.stripTrailingZeros(), expectedSourceBalance.stripTrailingZeros());
-        BigDecimal expectedTargetBalance = targetAccount.getBalance().add(amount);
-        BigDecimal actualTargetBalance = retrievePersistedAccountBalance(targetAccount.getId());
-        checkSuccessfulTransactionPersisted(requestId);
+        var actualTargetBalance = retrievePersistedBalance(targetAccount.getId());
+        assertEquals(actualTargetBalance.stripTrailingZeros(), expectedTargetBalance.stripTrailingZeros());
+        validateTransactionPersisted(transactionId);
+    }
+
+    /**
+     * Insufficient balance
+     *
+     * @throws MoneyTransferException
+     */
+    @Test
+    public void testInsufficientBalance() throws MoneyTransferException {
+        var amount = sourceAccount.getBalance().multiply(BigDecimal.valueOf(10));
+        assertThrows(InsufficientBalanceException.class, () -> transactionService.transferSerializable(UUID.randomUUID(), new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount)));
+        var actualSourceBalance = retrievePersistedBalance(sourceAccount.getId());
+        var expectedSourceBalance = sourceAccount.getBalance();
+        assertEquals(actualSourceBalance.stripTrailingZeros(), expectedSourceBalance.stripTrailingZeros());
+        var expectedTargetBalance = targetAccount.getBalance();
+        var actualTargetBalance = retrievePersistedBalance(targetAccount.getId()).stripTrailingZeros();
         assertEquals(actualTargetBalance.stripTrailingZeros(), expectedTargetBalance.stripTrailingZeros());
     }
 
     /**
-     * Insufficient source Account balance test
+     * Same account
+     *
      * @throws MoneyTransferException
      */
-    @Test(expected = InsufficientBalanceException.class)
-    public void testInsufficientBalance() throws MoneyTransferException {
-        BigDecimal amount = sourceAccount.getBalance().multiply(BigDecimal.valueOf(10));
-        transactionService.transferSerializable(UUID.randomUUID(), new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount));
-        BigDecimal actualSourceBalance = retrievePersistedAccountBalance(sourceAccount.getId());
-        BigDecimal expectedSourceBalance = sourceAccount.getBalance();
-        assertEquals(actualSourceBalance, expectedSourceBalance);
-        BigDecimal expectedTargetBalance = targetAccount.getBalance();
-        BigDecimal actualTargetBalance = retrievePersistedAccountBalance(targetAccount.getId());
-        assertEquals(actualTargetBalance, expectedTargetBalance);
-    }
-
-    /**
-     * Same account transfer test
-     * @throws MoneyTransferException
-     */
-    @Test(expected = SameAccountException.class)
+    @Test
     public void testTransferSameAccount() throws MoneyTransferException {
-        BigDecimal amount = BigDecimal.ONE;
-        BigDecimal expectedBalance = sourceAccount.getBalance();
-        transactionService.transferSerializable(UUID.randomUUID(), new NewTransferDto(sourceAccount.getId(), sourceAccount.getId(), amount));
-        BigDecimal actualBalance = retrievePersistedAccountBalance(sourceAccount.getId());
-        assertEquals(actualBalance, expectedBalance);
+        var amount = BigDecimal.ONE;
+        var expectedBalance = sourceAccount.getBalance();
+        assertThrows(SameAccountException.class, () -> transactionService.transferSerializable(UUID.randomUUID(), new NewTransferDto(sourceAccount.getId(), sourceAccount.getId(), amount)));
+        var actualBalance = retrievePersistedBalance(sourceAccount.getId());
+        assertEquals(actualBalance.stripTrailingZeros(), expectedBalance.stripTrailingZeros());
     }
 
     /**
-     * Account not found test
+     * Account not found
+     *
      * @throws MoneyTransferException
      */
-    @Test(expected = ResourceNotFoundException.class)
+    @Test
     public void testAccountNotFound() throws MoneyTransferException {
-        BigDecimal amount = BigDecimal.ONE;
-        UUID requestId = UUID.randomUUID();
-        UUID nonExistingAccountId = UUID.randomUUID();
-        BigDecimal expectedBalance = sourceAccount.getBalance();
-        transactionService.transferSerializable(requestId, new NewTransferDto(sourceAccount.getId(), nonExistingAccountId, amount));
-        BigDecimal actualBalance = retrievePersistedAccountBalance(sourceAccount.getId());
-
-        assertEquals(actualBalance, expectedBalance);
+        var amount = BigDecimal.ONE;
+        var nonExistingAccountId = UUID.randomUUID();
+        var expectedBalance = sourceAccount.getBalance();
+        assertThrows(ResourceNotFoundException.class, () -> transactionService.transferSerializable(UUID.randomUUID(), new NewTransferDto(sourceAccount.getId(), nonExistingAccountId, amount)));
+        var actualBalance = retrievePersistedBalance(sourceAccount.getId());
+        assertEquals(actualBalance.stripTrailingZeros(), expectedBalance.stripTrailingZeros());
     }
 
-    private BigDecimal retrievePersistedAccountBalance(UUID accountId) throws ResourceNotFoundException {
+    private BigDecimal retrievePersistedBalance(UUID accountId) throws ResourceNotFoundException {
         return accountService.getAccountById(accountId).getBalance();
     }
 
-    private void checkSuccessfulTransactionPersisted(UUID requestId) {
-        Optional<Transaction> retrievedTransaction = transactionRepository.findById(requestId);
+    private void validateTransactionPersisted(UUID transactionId) {
+        Optional<Transaction> retrievedTransaction = transactionRepository.findById(transactionId);
         assertTrue(retrievedTransaction.isPresent());
-        Assertions.assertEquals(retrievedTransaction.get().getStatus(), RequestStatus.SUCCESS);
+        Assertions.assertEquals(retrievedTransaction.get().getTransactionStatus(), TransactionStatus.SUCCESS);
     }
 }
 
