@@ -66,7 +66,6 @@ public class TransactionManagementServiceImplTest {
     /**
      * Validates that a failed transfer request is persisted.
      *
-     * @throws MoneyTransferException
      */
     @Test
     public void testPersisted_FailedRequest() {
@@ -75,9 +74,7 @@ public class TransactionManagementServiceImplTest {
         var id = UUID.randomUUID();
         var newTransferDto = new NewTransferDto(sourceAccount.getId(), nonExistentAccountId, amount);
         assertThrows(MoneyTransferException.class, () -> transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
-        Optional<Transaction> retrievedTransaction = transactionRepository.findById(id);
-        assertTrue(retrievedTransaction.isPresent());
-        assertEquals(retrievedTransaction.get().getTransactionStatus(), TransactionStatus.FAILED);
+        validatePersistedTransaction(id, TransactionStatus.FAILED, HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -90,9 +87,8 @@ public class TransactionManagementServiceImplTest {
         var amount = sourceAccount.getBalance();
         var id = UUID.randomUUID();
         var newTransferDto = new NewTransferDto(sourceAccount.getId(), targetAccount.getId(), amount);
-        var transaction = transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
-        assertEquals(transaction.getHttpStatus(), GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
-        assertEquals(transaction.getTransactionStatus(), TransactionStatus.SUCCESS);
+        transactionManagementService.processRequest(id, newTransferDto, ConcurrencyControlMode.SERIALIZABLE_ISOLATION);
+        validatePersistedTransaction(id, TransactionStatus.SUCCESS, GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
     }
 
     /**
@@ -142,5 +138,12 @@ public class TransactionManagementServiceImplTest {
         var exception = assertThrows(RequestConflictException.class, () -> transactionManagementService.processRequest(transactionId, newTransferDto2, ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
         assertTrue(exception.getMessage().contains("The JSON body does not match"));
         assertEquals(exception.getHttpStatus(), HttpStatus.CONFLICT);
+    }
+    private void validatePersistedTransaction(UUID id, TransactionStatus transactionStatus, HttpStatus httpStatus){
+        Optional<Transaction> retrievedTransaction = transactionRepository.findById(id);
+        assertTrue(retrievedTransaction.isPresent());
+        Transaction transaction = retrievedTransaction.get();
+        assertEquals(transaction.getTransactionStatus(), transactionStatus);
+        assertEquals(transaction.getHttpStatus(), httpStatus);
     }
 }
