@@ -22,22 +22,20 @@ import java.util.UUID;
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Transaction {
     @Id
-    private UUID id;
+    private UUID transactionId;
 
     private TransactionStatus transactionStatus;
     @ManyToOne
-    @JoinColumn(name = "source_account_id", referencedColumnName = "id")
+    @JoinColumn(name = "source_account_id", referencedColumnName = "accountId")
     private Account sourceAccount;
 
     @ManyToOne
-    @JoinColumn(name = "target_account_id", referencedColumnName = "id")
+    @JoinColumn(name = "target_account_id", referencedColumnName = "accountId")
     private Account targetAccount;
 
     private BigDecimal amount;
 
     private String message;
-
-    private int hashedPayload;
 
     private Currency currency;
 
@@ -45,7 +43,7 @@ public class Transaction {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(transactionId);
     }
 
     @Override
@@ -57,6 +55,6 @@ public class Transaction {
             return false;
         }
         Transaction other = (Transaction) obj;
-        return Objects.equals(id, other.id);
+        return Objects.equals(transactionId, other.transactionId);
     }
 }

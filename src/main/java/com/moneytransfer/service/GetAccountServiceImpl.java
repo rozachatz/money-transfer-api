@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 /**
- * Implementation of {@link AccountManagementService}
+ * Implementation of {@link GetAccountService}
  */
 @Service
 @RequiredArgsConstructor
-public class AccountManagementServiceImpl implements AccountManagementService {
+class GetAccountServiceImpl implements GetAccountService {
     /**
      * The Account repository.
      */

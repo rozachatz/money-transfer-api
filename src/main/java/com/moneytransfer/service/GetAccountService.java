@@ -8,9 +8,9 @@ import org.springframework.data.domain.Page;
 import java.util.UUID;
 
 /**
- * Service that manages accounts
+ * Service that gets {@link Account} entities.
  */
-public interface AccountManagementService {
+public interface GetAccountService {
     Account getAccountById(final UUID accountId) throws ResourceNotFoundException;
 
     Account getAccountByIdOrReturnDefault(final UUID accountId) throws ResourceNotFoundException;
@@ -22,5 +22,4 @@ public interface AccountManagementService {
     TransferAccountsDto getAccountsByIdsOptimistic(final UUID sourceAccountId, final UUID targetAccountId) throws ResourceNotFoundException;
 
     TransferAccountsDto getAccountsByIdsPessimistic(final UUID sourceAccountId, final UUID targetAccountId) throws ResourceNotFoundException;
-
 }

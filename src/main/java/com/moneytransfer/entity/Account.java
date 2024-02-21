@@ -22,11 +22,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Account {
+    @Id
+    private UUID accountId;
     protected String ownerName;
     @Version
     protected int version;
-    @Id
-    private UUID id;
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
     private Currency currency;
@@ -42,7 +42,7 @@ public class Account {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(accountId);
     }
 
     @Override
@@ -54,6 +54,6 @@ public class Account {
             return false;
         }
         Account other = (Account) obj;
-        return Objects.equals(id, other.id);
+        return Objects.equals(accountId, other.accountId);
     }
 }

@@ -8,8 +8,9 @@ import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.ConcurrencyControlMode;
 import com.moneytransfer.exceptions.MoneyTransferException;
 import com.moneytransfer.exceptions.ResourceNotFoundException;
-import com.moneytransfer.service.AccountManagementService;
-import com.moneytransfer.service.TransactionManagementService;
+import com.moneytransfer.service.GetAccountService;
+import com.moneytransfer.service.GetTransactionService;
+import com.moneytransfer.service.MoneyTransferService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -28,21 +29,23 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIController {
-    private final AccountManagementService accountManagementService;
-    private final TransactionManagementService transactionManagementService;
+    private final GetAccountService getAccountService;
+    private final GetTransactionService getTransactionService;
+    private final MoneyTransferService moneyTransferService;
 
-    @PostMapping("/transfer/request/{id}/{concurrencyControlMode}")
-    public ResponseEntity<GetTransferDto> transferRequest(@PathVariable UUID id, @RequestBody NewTransferDto newTransferDto, @PathVariable ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
-        Transaction transaction = transactionManagementService.processRequest(
-                id,
+
+    @PostMapping("/transfer/request/{transactionId}/{concurrencyControlMode}")
+    public ResponseEntity<GetTransferDto> transferRequest(@PathVariable UUID transactionId, @RequestBody NewTransferDto newTransferDto, @PathVariable ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
+        Transaction transaction = moneyTransferService.transfer(
+                transactionId,
                 newTransferDto,
                 concurrencyControlMode);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new GetTransferDto(
-                        transaction.getId(),
-                        transaction.getSourceAccount().getId(),
-                        transaction.getTargetAccount().getId(),
+                        transaction.getTransactionId(),
+                        transaction.getSourceAccount().getAccountId(),
+                        transaction.getTargetAccount().getAccountId(),
                         transaction.getAmount(),
                         transaction.getTransactionStatus(),
                         transaction.getCurrency()));
@@ -53,13 +56,13 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
             @PathVariable BigDecimal minAmount,
             @PathVariable BigDecimal maxAmount) throws ResourceNotFoundException {
-        List<Transaction> transactions = transactionManagementService.getTransactionByAmountBetween(minAmount, maxAmount);
+        List<Transaction> transactions = getTransactionService.getTransactionByAmountBetween(minAmount, maxAmount);
         return ResponseEntity.ok(
                 transactions.stream()
                         .map(transaction -> new GetTransferDto(
-                                transaction.getId(),
-                                transaction.getSourceAccount().getId(),
-                                transaction.getTargetAccount().getId(),
+                                transaction.getTransactionId(),
+                                transaction.getSourceAccount().getAccountId(),
+                                transaction.getTargetAccount().getAccountId(),
                                 transaction.getAmount(),
                                 transaction.getTransactionStatus(),
                                 transaction.getCurrency()))
@@ -70,11 +73,11 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
     @Cacheable
     @GetMapping("/transactions/{limit}")
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithLimit(@PathVariable int limit) {
-        Page<Transaction> transactions = transactionManagementService.getTransactionsWithLimit(limit);
+        Page<Transaction> transactions = getTransactionService.getTransactionsWithLimit(limit);
         return ResponseEntity.ok(transactions.get().map(transaction -> new GetTransferDto(
-                transaction.getId(),
-                transaction.getSourceAccount().getId(),
-                transaction.getTargetAccount().getId(),
+                transaction.getTransactionId(),
+                transaction.getSourceAccount().getAccountId(),
+                transaction.getTargetAccount().getAccountId(),
                 transaction.getAmount(),
                 transaction.getTransactionStatus(),
                 transaction.getCurrency())).collect(Collectors.toList()));
@@ -82,11 +85,11 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
 
     @GetMapping("/transaction/{id}")
     public ResponseEntity<GetTransferDto> getTransactionById(@PathVariable UUID id) throws ResourceNotFoundException {
-        Transaction transaction = transactionManagementService.getTransactionById(id);
+        Transaction transaction = getTransactionService.getTransactionById(id);
         return ResponseEntity.ok(new GetTransferDto(
-                transaction.getId(),
-                transaction.getSourceAccount().getId(),
-                transaction.getTargetAccount().getId(),
+                transaction.getTransactionId(),
+                transaction.getSourceAccount().getAccountId(),
+                transaction.getTargetAccount().getAccountId(),
                 transaction.getAmount(),
                 transaction.getTransactionStatus(),
                 transaction.getCurrency()));
@@ -95,14 +98,15 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
     @Cacheable
     @GetMapping("/accounts/{limit}")
     public ResponseEntity<List<GetAccountDto>> getAccountsWithLimit(@PathVariable int limit) {
-        Page<Account> accounts = accountManagementService.getAccountsWithLimit(limit);
-        return ResponseEntity.ok(accounts.get().map(account -> new GetAccountDto(account.getId(), account.getBalance(), account.getCurrency())).collect(Collectors.toList()));
+        Page<Account> accounts = getAccountService.getAccountsWithLimit(limit);
+        return ResponseEntity.ok(accounts.get().map(account -> new GetAccountDto(account.getAccountId(), account.getBalance(), account.getCurrency())).collect(Collectors.toList()));
     }
+
     @GetMapping("/account/{id}")
     public ResponseEntity<GetAccountDto> getAccountById(@PathVariable UUID id) throws ResourceNotFoundException {
-        Account account = accountManagementService.getAccountById(id);
+        Account account = getAccountService.getAccountById(id);
         return ResponseEntity.ok(new GetAccountDto(
-                account.getId(),
+                account.getAccountId(),
                 account.getBalance(),
                 account.getCurrency()));
     }

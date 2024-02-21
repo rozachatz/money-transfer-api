@@ -62,7 +62,7 @@ public interface MoneyTransferAPIController {
                             content = @Content)
 
             })
-    ResponseEntity<GetTransferDto> transferRequest(@Parameter(description = "Unique identifier for the transfer request.", required = true) UUID id, @Parameter(description = "The source, target accounts and the amount to be transferred.", required = true) NewTransferDto newTransferDTO, @Parameter(description = "Enforces serializable isolation or pessimistic/optimistic locking, depending on its value.", required = true) ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
+    ResponseEntity<GetTransferDto> transferRequest(@Parameter(description = "Unique identifier for the transfer request.", required = true) UUID transactionId, @Parameter(description = "The source, target accounts and the amount to be transferred.", required = true) NewTransferDto newTransferDTO, @Parameter(description = "Enforces serializable isolation or pessimistic/optimistic locking, depending on its value.", required = true) ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
 
     @Operation(summary = "Gets all transactions with amount in the given range.")
     @ApiResponses(
