@@ -10,6 +10,7 @@ import com.moneytransfer.entity.Request;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.ConcurrencyControlMode;
 import com.moneytransfer.enums.Currency;
+import com.moneytransfer.enums.RequestStatus;
 import com.moneytransfer.enums.TransactionStatus;
 import com.moneytransfer.exceptions.*;
 import com.moneytransfer.repository.AccountRepository;
@@ -75,6 +76,7 @@ public class MoneyTransferServiceImplTest {
     @Autowired
     private RequestRepository requestRepository;
 
+
     /**
      * Source Account
      */
@@ -118,7 +120,7 @@ public class MoneyTransferServiceImplTest {
         expectedTargetBalance = expectedTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
         actualTargetBalance = actualTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
         assertEquals(actualTargetBalance, expectedTargetBalance);
-        validatePersistedTransaction(requestId,TransactionStatus.SUCCESSFUL_TRANSFER,GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
+        validateResolvedRequest(requestId,TransactionStatus.SUCCESSFUL_TRANSFER, GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
     }
 
     /**
@@ -139,7 +141,7 @@ public class MoneyTransferServiceImplTest {
         expectedTargetBalance = expectedTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
         actualTargetBalance = actualTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
         assertEquals(actualTargetBalance, expectedTargetBalance);
-        validatePersistedTransaction(requestId,TransactionStatus.SUCCESSFUL_TRANSFER,GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
+        validateResolvedRequest(requestId,TransactionStatus.SUCCESSFUL_TRANSFER,GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
     }
 
     /**
@@ -158,7 +160,7 @@ public class MoneyTransferServiceImplTest {
         var expectedTargetBalance = targetAccount.getBalance();
         var actualTargetBalance = retrievePersistedBalance(targetAccount.getAccountId()).stripTrailingZeros();
         assertEquals(actualTargetBalance.stripTrailingZeros(), expectedTargetBalance.stripTrailingZeros());
-        validatePersistedTransaction(requestId, TransactionStatus.FAILED_TRANSFER, HttpStatus.PAYMENT_REQUIRED);
+        validateResolvedRequest(requestId, TransactionStatus.FAILED_TRANSFER, HttpStatus.PAYMENT_REQUIRED);
     }
 
     /**
@@ -174,7 +176,7 @@ public class MoneyTransferServiceImplTest {
         assertThrows(SameAccountException.class, () -> moneyTransferService.transfer(requestId, new NewTransferDto(sourceAccount.getAccountId(), sourceAccount.getAccountId(), amount), ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
         var actualBalance = retrievePersistedBalance(sourceAccount.getAccountId());
         assertEquals(actualBalance.stripTrailingZeros(), expectedBalance.stripTrailingZeros());
-        validatePersistedTransaction(requestId, TransactionStatus.FAILED_TRANSFER, HttpStatus.BAD_REQUEST);
+        validateResolvedRequest(requestId, TransactionStatus.FAILED_TRANSFER, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -191,7 +193,7 @@ public class MoneyTransferServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> moneyTransferService.transfer(requestId, new NewTransferDto(sourceAccount.getAccountId(), nonExistingAccountId, amount), ConcurrencyControlMode.SERIALIZABLE_ISOLATION));
         var actualBalance = retrievePersistedBalance(sourceAccount.getAccountId());
         assertEquals(actualBalance.stripTrailingZeros(), expectedBalance.stripTrailingZeros());
-        validatePersistedTransaction(requestId, TransactionStatus.FAILED_TRANSFER, HttpStatus.NOT_FOUND);
+        validateResolvedRequest(requestId, TransactionStatus.FAILED_TRANSFER, HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -243,12 +245,19 @@ public class MoneyTransferServiceImplTest {
         Assertions.assertEquals(exception.getHttpStatus(), HttpStatus.CONFLICT);
     }
 
-    private void validatePersistedTransaction(UUID id, TransactionStatus transactionStatus, HttpStatus httpStatus){
+    /**
+     * Validates the resolved request fields.
+     * @param id
+     * @param transactionStatus
+     * @param httpStatus
+     */
+    private void validateResolvedRequest(UUID id, TransactionStatus transactionStatus, HttpStatus httpStatus){
         Optional<Request> retrievedRequest = requestRepository.findById(id);
         assertTrue(retrievedRequest.isPresent());
+        assertEquals(retrievedRequest.get().getRequestStatus(), RequestStatus.RESOLVED);
         Transaction transaction = retrievedRequest.get().getTransaction();
-        Assertions.assertEquals(transaction.getTransactionStatus(), transactionStatus);
-        Assertions.assertEquals(transaction.getHttpStatus(), httpStatus);
+        assertEquals(transaction.getTransactionStatus(), transactionStatus);
+        assertEquals(transaction.getHttpStatus(), httpStatus);
     }
 
     private BigDecimal retrievePersistedBalance(UUID accountId) throws ResourceNotFoundException {

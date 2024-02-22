@@ -1,7 +1,7 @@
 package com.moneytransfer.component;
 
 import com.moneytransfer.dto.NewTransferDto;
-import com.moneytransfer.dto.RequestUpdateDto;
+import com.moneytransfer.dto.ResolvedRequestDto;
 import com.moneytransfer.entity.Request;
 import com.moneytransfer.entity.Transaction;
 import com.moneytransfer.enums.RequestStatus;
@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +28,9 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class IdempotentTransferAspect {
-    private final TransactionRepository transactionRepository;
     private final GetAccountService getAccountService;
     private final RequestRepository requestRepository;
-
+    private final TransactionRepository transactionRepository;
 
     @Around("@annotation(idempotentTransferRequest) && execution(* transfer(java.util.UUID, com.moneytransfer.dto.NewTransferDto,..)) && args(requestId, newTransferDto,..)")
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -49,38 +49,26 @@ public class IdempotentTransferAspect {
      */
     private Transaction processRequest(final UUID requestId, final NewTransferDto newTransferDto, final ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         try {
-            var request = getOrCreateRequest(requestId, newTransferDto);
-            var requestStatus = request.getRequestStatus();
-            return switch (requestStatus) {
+            var request = getOrSubmitRequest(requestId, newTransferDto);
+            return switch (request.getRequestStatus()) {
                 case SUBMITTED -> processTransfer(request, newTransferDto, proceedingJoinPoint);
                 case RESOLVED -> retrieveTransaction(request, newTransferDto);
             };
         } catch (RuntimeException e) {
-            requestRepository.save(createNewRequest(requestId, newTransferDto));
+            getOrSubmitRequest(requestId, newTransferDto);
             throw e;
         }
     }
 
     /**
-     * Gets or creates a new request.
+     * Gets or submits a new request.
      *
      * @param requestId
      * @param newTransferDto
      * @return
      */
-    private Request getOrCreateRequest(final UUID requestId, final NewTransferDto newTransferDto) {
-        return requestRepository.findById(requestId).orElse(createNewRequest(requestId, newTransferDto));
-    }
-
-    /**
-     * Creates a new request.
-     *
-     * @param requestId
-     * @param newTransferDto
-     * @return
-     */
-    private Request createNewRequest(final UUID requestId, final NewTransferDto newTransferDto) {
-        return new Request(requestId, RequestStatus.SUBMITTED, newTransferDto.amount(), newTransferDto.sourceAccountId(), newTransferDto.targetAccountId());
+    private Request getOrSubmitRequest(final UUID requestId, final NewTransferDto newTransferDto) {
+        return requestRepository.findById(requestId).orElseGet(()->(requestRepository.save(new Request(requestId, RequestStatus.SUBMITTED, newTransferDto.amount(), newTransferDto.sourceAccountId(), newTransferDto.targetAccountId()))));
     }
 
     /**
@@ -91,7 +79,7 @@ public class IdempotentTransferAspect {
      * @return
      * @throws Throwable
      */
-    private Transaction processTransfer(final Request request, NewTransferDto newTransferDto, ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
+    private Transaction processTransfer(final Request request, final NewTransferDto newTransferDto, final ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         validateSubmittedRequest(request, newTransferDto);
         Transaction transaction = null;
         try {
@@ -105,9 +93,29 @@ public class IdempotentTransferAspect {
         }
     }
 
-    private void validateSubmittedRequest(Request request, NewTransferDto newTransferDto) throws MoneyTransferException {
-        if (Optional.ofNullable(request.getTransaction()).isPresent())
-            throw new MoneyTransferException("Invalid request: Submitted request should not contain an existing Transaction!");
+    /**
+     * Retrieves the Transaction of a resolved request.
+     * @param request
+     * @param newTransferDto
+     * @return
+     * @throws Throwable
+     */
+    private Transaction retrieveTransaction(final Request request, final NewTransferDto newTransferDto) throws Throwable {
+        Transaction transaction = request.getTransaction();
+        return switch (transaction.getTransactionStatus()) {
+            case SUCCESSFUL_TRANSFER -> validateIdempotentAndGet(request, newTransferDto);
+            case FAILED_TRANSFER -> validateIdempotentAndThrow(request, newTransferDto);
+        };
+    }
+
+    /**
+     * Idempotency and transaction validation for that an unresolved (submitted) request.
+     * @param request
+     * @param newTransferDto
+     * @throws MoneyTransferException
+     */
+    private void validateSubmittedRequest(final Request request, final NewTransferDto newTransferDto) throws MoneyTransferException {
+        if (Optional.ofNullable(request.getTransaction()).isPresent()) throw new RequestConflictException("Invalid submitted request: Unresolved requests should not contain an existing Transaction!");
         validateIdempotent(request, newTransferDto);
     }
 
@@ -129,37 +137,23 @@ public class IdempotentTransferAspect {
     }
 
     /**
-     * Resolves the request.
-     *
+     * Resolves the request by associating it with a Transaction.
      * @param requestId
      * @param transaction
      */
     private void resolveRequest(final UUID requestId, final Transaction transaction) throws MoneyTransferException {
-        var requestUpdateDto = validateAndGetRequestDto(requestId, transaction);
-        requestRepository.findById(requestId)
-                .ifPresentOrElse(existingRequest -> requestRepository.updateRequest(requestUpdateDto), () -> requestRepository.save(new Request(requestUpdateDto.getRequestId(), requestUpdateDto.getRequestStatus(), requestUpdateDto.getTransaction())));
+        validateTransactionExists(transaction);
+        requestRepository.resolveRequest(new ResolvedRequestDto(requestId, transaction));
     }
-
-    private RequestUpdateDto validateAndGetRequestDto(UUID requestId, Transaction transaction) throws MoneyTransferException {
-        Optional.ofNullable(transaction).orElseThrow(() -> new MoneyTransferException("Cannot resolve request: Associated Transaction was not found."));
-        return new RequestUpdateDto(requestId, RequestStatus.RESOLVED, transaction);
-    }
-
 
     /**
-     * Retrieves the associated Transaction for a resolved request.
-     *
-     * @param request
-     * @param newTransferDto
+     * Transaction that resolves the request exists.
+     * @param transaction
      * @return
-     * @throws Throwable
+     * @throws MoneyTransferException
      */
-    private Transaction retrieveTransaction(final Request request, final NewTransferDto newTransferDto) throws Throwable {
-        Transaction transaction = request.getTransaction();
-        return switch (transaction.getTransactionStatus()) {
-            case SUCCESSFUL_TRANSFER -> validateIdempotentAndGet(request, newTransferDto);
-            case FAILED_TRANSFER -> validateIdempotentAndThrow(request, newTransferDto);
-        };
+    private void validateTransactionExists(final Transaction transaction) throws MoneyTransferException {
+        Optional.ofNullable(transaction).orElseThrow(() -> new MoneyTransferException("Cannot resolve request: Associated Transaction was not found."));
     }
 
     /**
@@ -174,7 +168,6 @@ public class IdempotentTransferAspect {
         validateIdempotent(request, newTransferDto);
         return request.getTransaction();
     }
-
 
     /**
      * Validates idempotency and throws a {@link RequestConflictException} with the appropriate error message.
@@ -201,6 +194,5 @@ public class IdempotentTransferAspect {
             throw new RequestConflictException(errorMessage);
         }
     }
-
 
 }

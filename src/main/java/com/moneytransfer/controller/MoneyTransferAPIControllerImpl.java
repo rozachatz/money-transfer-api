@@ -51,7 +51,6 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
                         transaction.getCurrency()));
     }
 
-    @Cacheable
     @GetMapping("/transactions/{minAmount}/{maxAmount}")
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithinRange(
             @PathVariable BigDecimal minAmount,
@@ -70,7 +69,6 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
         );
     }
 
-    @Cacheable
     @GetMapping("/transactions/{limit}")
     public ResponseEntity<List<GetTransferDto>> getTransactionsWithLimit(@PathVariable int limit) {
         Page<Transaction> transactions = getTransactionService.getTransactionsWithLimit(limit);
@@ -95,7 +93,6 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
                 transaction.getCurrency()));
     }
 
-    @Cacheable
     @GetMapping("/accounts/{limit}")
     public ResponseEntity<List<GetAccountDto>> getAccountsWithLimit(@PathVariable int limit) {
         Page<Account> accounts = getAccountService.getAccountsWithLimit(limit);
