@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.springframework.transaction.annotation.Propagation.NESTED;
+
 /**
  * Implementation for {@link MoneyTransferService}.
  */
@@ -44,12 +46,12 @@ class MoneyTransferServiceImpl implements MoneyTransferService {
     private final TransactionRepository transactionRepository;
 
     @IdempotentTransferRequest
-    @Transactional
-    public Transaction transfer(final UUID transactionId, final NewTransferDto newTransferDto, ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
+    @Transactional(propagation = NESTED)
+    public Transaction transfer(final UUID requestId, final NewTransferDto newTransferDto, final ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
         return switch (concurrencyControlMode) {
-            case SERIALIZABLE_ISOLATION -> transferSerializable(transactionId, newTransferDto);
-            case OPTIMISTIC_LOCKING -> transferOptimistic(transactionId, newTransferDto);
-            case PESSIMISTIC_LOCKING -> transferPessimistic(transactionId, newTransferDto);
+            case SERIALIZABLE_ISOLATION -> transferSerializable(newTransferDto);
+            case OPTIMISTIC_LOCKING -> transferOptimistic(newTransferDto);
+            case PESSIMISTIC_LOCKING -> transferPessimistic(newTransferDto);
         };
     }
 
@@ -57,41 +59,38 @@ class MoneyTransferServiceImpl implements MoneyTransferService {
      * Transfer money with serializable isolation.
      *
      * @param newTransferDto
-     * @param transactionId
      * @return a new Transaction
      * @throws MoneyTransferException
      */
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    private Transaction transferSerializable(final UUID transactionId, final NewTransferDto newTransferDto) throws MoneyTransferException {
+    private Transaction transferSerializable(final NewTransferDto newTransferDto) throws MoneyTransferException {
         var transferAccountsDto = getAccountService.getAccountsByIds(newTransferDto.sourceAccountId(), newTransferDto.targetAccountId());
-        return performTransfer(transactionId, transferAccountsDto, newTransferDto);
+        return performTransfer(transferAccountsDto, newTransferDto);
     }
 
     /**
      * Transfer money with optimistic locking.
      *
      * @param newTransferDto
-     * @param transactionId
      * @return a new Transaction
      * @throws MoneyTransferException
      */
 
-    private Transaction transferOptimistic(final UUID transactionId, final NewTransferDto newTransferDto) throws MoneyTransferException {
+    private Transaction transferOptimistic(final NewTransferDto newTransferDto) throws MoneyTransferException {
         var transferAccountsDto = getAccountService.getAccountsByIdsOptimistic(newTransferDto.sourceAccountId(), newTransferDto.targetAccountId());
-        return performTransfer(transactionId, transferAccountsDto, newTransferDto);
+        return performTransfer(transferAccountsDto, newTransferDto);
     }
 
     /**
      * Transfer money with pessimistic locking.
      *
      * @param newTransferDto
-     * @param transactionId
      * @return a new Transaction
      * @throws MoneyTransferException
      */
-    private Transaction transferPessimistic(final UUID transactionId, final NewTransferDto newTransferDto) throws MoneyTransferException {
+    private Transaction transferPessimistic(final NewTransferDto newTransferDto) throws MoneyTransferException {
         var transferAccountsDto = getAccountService.getAccountsByIdsPessimistic(newTransferDto.sourceAccountId(), newTransferDto.targetAccountId());
-        return performTransfer(transactionId, transferAccountsDto, newTransferDto);
+        return performTransfer(transferAccountsDto, newTransferDto);
     }
 
     /**
@@ -99,13 +98,12 @@ class MoneyTransferServiceImpl implements MoneyTransferService {
      *
      * @param transferAccountsDto
      * @param newTransferDto
-     * @param transactionId
      * @return a new Transaction
      * @throws MoneyTransferException
      */
-    private Transaction performTransfer(final UUID transactionId, final TransferAccountsDto transferAccountsDto, final NewTransferDto newTransferDto) throws MoneyTransferException {
+    private Transaction performTransfer(final TransferAccountsDto transferAccountsDto, final NewTransferDto newTransferDto) throws MoneyTransferException {
         validateTransfer(transferAccountsDto, newTransferDto.amount());
-        return persistTransaction(transactionId, transferAccountsDto, newTransferDto);
+        return persistSuccessfulTransfer(transferAccountsDto, newTransferDto);
     }
 
     /**
@@ -132,18 +130,17 @@ class MoneyTransferServiceImpl implements MoneyTransferService {
     /**
      * Persists the successful {@link Transaction}.
      *
-     * @param transactionId
      * @param transferAccountsDto
      * @param newTransferDto
      * @return a new Transaction
      * @throws MoneyTransferException
      */
-    private Transaction persistTransaction(final UUID transactionId, final TransferAccountsDto transferAccountsDto, final NewTransferDto newTransferDto) throws MoneyTransferException {
+    private Transaction persistSuccessfulTransfer(final TransferAccountsDto transferAccountsDto, final NewTransferDto newTransferDto) throws MoneyTransferException {
         var sourceAccount = transferAccountsDto.getSourceAccount();
         var targetAccount = transferAccountsDto.getTargetAccount();
         transferAndExchange(sourceAccount, targetAccount, newTransferDto.amount());
         var currency = sourceAccount.getCurrency();
-        Transaction transaction = new Transaction(transactionId, TransactionStatus.SUCCESS, sourceAccount, targetAccount, newTransferDto.amount(), "Transaction was executed successfully.", currency, GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
+        Transaction transaction = new Transaction(UUID.randomUUID(), TransactionStatus.SUCCESSFUL_TRANSFER, sourceAccount, targetAccount, newTransferDto.amount(), "Transaction was executed successfully.", currency, GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
         return transactionRepository.save(transaction);
     }
 

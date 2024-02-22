@@ -11,5 +11,5 @@ import java.util.UUID;
  * Service that performs the money transfer and persists the associated Transaction.
  */
 public interface MoneyTransferService {
-    Transaction transfer(UUID transactionId, NewTransferDto transferDto, ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
+    Transaction transfer(UUID requestId, NewTransferDto transferDto, ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException;
 }
