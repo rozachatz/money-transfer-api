@@ -33,7 +33,6 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
     private final GetTransactionService getTransactionService;
     private final MoneyTransferService moneyTransferService;
 
-
     @PostMapping("/transfer/request/{transactionId}/{concurrencyControlMode}")
     public ResponseEntity<GetTransferDto> transferRequest(@PathVariable UUID transactionId, @RequestBody NewTransferDto newTransferDto, @PathVariable ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {
         Transaction transaction = moneyTransferService.transfer(

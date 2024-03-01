@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
@@ -14,7 +15,7 @@ import java.util.UUID;
 @Table(name = "requests")
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public class Request {
+public class Request implements Serializable {
     @Id
     private UUID requestId;
     private RequestStatus requestStatus;

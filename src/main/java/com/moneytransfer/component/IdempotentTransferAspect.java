@@ -17,6 +17,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class IdempotentTransferAspect {
     private final GetAccountService getAccountService;
-    private final RequestRepository requestRepository;
+    private final RequestCacheManager requestCacheManager;
     private final TransactionRepository transactionRepository;
 
     @Around("@annotation(idempotentTransferRequest) && execution(* transfer(java.util.UUID, com.moneytransfer.dto.NewTransferDto,..)) && args(requestId, newTransferDto,..)")
@@ -49,28 +51,23 @@ public class IdempotentTransferAspect {
      */
     private Transaction processRequest(final UUID requestId, final NewTransferDto newTransferDto, final ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         try {
-            var request = getOrSubmitRequest(requestId, newTransferDto);
+            var request = getOrSubmitRequest(requestId,newTransferDto);
             return switch (request.getRequestStatus()) {
                 case SUBMITTED -> processTransfer(request, newTransferDto, proceedingJoinPoint);
                 case RESOLVED -> retrieveTransaction(request, newTransferDto);
             };
         } catch (RuntimeException e) {
-            getOrSubmitRequest(requestId, newTransferDto);
+            getOrSubmitRequest(requestId,newTransferDto);
             throw e;
         }
     }
-
-    /**
-     * Gets or submits a new request.
-     *
-     * @param requestId
-     * @param newTransferDto
-     * @return
-     */
-    private Request getOrSubmitRequest(final UUID requestId, final NewTransferDto newTransferDto) {
-        return requestRepository.findById(requestId).orElseGet(()->(requestRepository.save(new Request(requestId, RequestStatus.SUBMITTED, newTransferDto.amount(), newTransferDto.sourceAccountId(), newTransferDto.targetAccountId()))));
+    private Request getOrSubmitRequest(final UUID requestId, final NewTransferDto newTransferDto){
+        return Optional.ofNullable(requestCacheManager.getRequest(requestId)).orElseGet(()->submitRequest(requestId,newTransferDto));
     }
 
+    private Request submitRequest(final UUID requestId, final NewTransferDto newTransferDto){
+        return requestCacheManager.updateRequestCache(new Request(requestId, RequestStatus.SUBMITTED,newTransferDto.amount(), newTransferDto.sourceAccountId(), newTransferDto.targetAccountId()));
+    }
     /**
      * Processes the transfer and resolves the request.
      *
@@ -143,7 +140,7 @@ public class IdempotentTransferAspect {
      */
     private void resolveRequest(final UUID requestId, final Transaction transaction) throws MoneyTransferException {
         validateTransactionExists(transaction);
-        requestRepository.resolveRequest(new ResolvedRequestDto(requestId, transaction));
+        requestCacheManager.updateRequestCache(new Request(requestId,RequestStatus.RESOLVED,transaction));
     }
 
     /**
@@ -153,7 +150,7 @@ public class IdempotentTransferAspect {
      * @throws MoneyTransferException
      */
     private void validateTransactionExists(final Transaction transaction) throws MoneyTransferException {
-        Optional.ofNullable(transaction).orElseThrow(() -> new MoneyTransferException("Cannot resolve request: Associated Transaction was not found."));
+        transactionRepository.findById(transaction.getTransactionId()).orElseThrow(()->new ResourceNotFoundException("Cannot resolve request: Associated Transaction was not found."));
     }
 
     /**
