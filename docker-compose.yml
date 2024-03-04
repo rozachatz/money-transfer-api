@@ -37,3 +37,5 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_REDIS_HOST: localhost
       SPRING_REDIS_PORT: 6379
+      SPRING_CACHE_REDIS_TIME_TO_LIVE: 86400000  # TTL for one day in milliseconds
+

@@ -21,11 +21,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Account implements Serializable {
-    @Id
-    private UUID accountId;
-    protected String ownerName;
     @Version
     protected int version;
+    @Id
+    private UUID accountId;
+    private String ownerName;
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
     private Currency currency;
