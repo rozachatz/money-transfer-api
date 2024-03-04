@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -19,12 +20,12 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public class Account {
-    @Id
-    private UUID accountId;
-    protected String ownerName;
+public class Account implements Serializable {
     @Version
     protected int version;
+    @Id
+    private UUID accountId;
+    private String ownerName;
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
     private Currency currency;

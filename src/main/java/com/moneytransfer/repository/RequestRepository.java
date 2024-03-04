@@ -13,4 +13,5 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
     @Modifying
     @Query("UPDATE Request r SET r.requestStatus = com.moneytransfer.enums.RequestStatus.RESOLVED, r.transaction = :#{#dto.transaction} WHERE r.requestId = :#{#dto.requestId}")
     void resolveRequest(@Param("dto") ResolvedRequestDto dto);
+
 }

@@ -12,7 +12,6 @@ import com.moneytransfer.service.GetAccountService;
 import com.moneytransfer.service.GetTransactionService;
 import com.moneytransfer.service.MoneyTransferService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,6 @@ public class MoneyTransferAPIControllerImpl implements MoneyTransferAPIControlle
     private final GetAccountService getAccountService;
     private final GetTransactionService getTransactionService;
     private final MoneyTransferService moneyTransferService;
-
 
     @PostMapping("/transfer/request/{transactionId}/{concurrencyControlMode}")
     public ResponseEntity<GetTransferDto> transferRequest(@PathVariable UUID transactionId, @RequestBody NewTransferDto newTransferDto, @PathVariable ConcurrencyControlMode concurrencyControlMode) throws MoneyTransferException {

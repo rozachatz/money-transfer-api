@@ -1,6 +1,6 @@
 package com.moneytransfer.service;
 
-import com.moneytransfer.component.IdempotentTransferRequest;
+import com.moneytransfer.annotation.IdempotentTransferRequest;
 import com.moneytransfer.dto.NewTransferDto;
 import com.moneytransfer.dto.TransferAccountsDto;
 import com.moneytransfer.entity.Account;

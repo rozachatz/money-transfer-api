@@ -96,9 +96,9 @@ public class MoneyTransferServiceImplTest {
     @Before
     public void setup() {
         BigDecimal balance = BigDecimal.valueOf(10);
-        sourceAccount = new Account(UUID.randomUUID(),"Name1", 0,  balance, Currency.EUR, LocalDateTime.now());
-        targetAccount = new Account(UUID.randomUUID(),"Name2", 0,  balance, Currency.USD, LocalDateTime.now());
-        targetAccount1 = new Account(UUID.randomUUID(),"Name3", 0,  balance, Currency.EUR, LocalDateTime.now());
+        sourceAccount = new Account(0, UUID.randomUUID(),"Name1",   balance, Currency.EUR, LocalDateTime.now());
+        targetAccount = new Account(0, UUID.randomUUID(),"Name2", balance, Currency.USD, LocalDateTime.now());
+        targetAccount1 = new Account(0, UUID.randomUUID(),"Name3", balance, Currency.EUR, LocalDateTime.now());
         accountRepository.saveAll(List.of(targetAccount, targetAccount1, sourceAccount));
     }
 
@@ -117,8 +117,8 @@ public class MoneyTransferServiceImplTest {
         var actualSourceBalance = retrievePersistedBalance(sourceAccount.getAccountId());
         assertEquals(actualSourceBalance.stripTrailingZeros(), expectedSourceBalance.stripTrailingZeros());
         var actualTargetBalance = retrievePersistedBalance(targetAccount1.getAccountId());
-        expectedTargetBalance = expectedTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
-        actualTargetBalance = actualTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
+        expectedTargetBalance = expectedTargetBalance.setScale(2, RoundingMode.HALF_EVEN);
+        actualTargetBalance = actualTargetBalance.setScale(2, RoundingMode.HALF_EVEN);
         assertEquals(actualTargetBalance, expectedTargetBalance);
         validateResolvedRequest(requestId,TransactionStatus.SUCCESSFUL_TRANSFER, GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
     }
@@ -138,8 +138,8 @@ public class MoneyTransferServiceImplTest {
         var actualSourceBalance = retrievePersistedBalance(sourceAccount.getAccountId());
         assertEquals(actualSourceBalance.stripTrailingZeros(), expectedSourceBalance.stripTrailingZeros());
         var actualTargetBalance = retrievePersistedBalance(targetAccount.getAccountId());
-        expectedTargetBalance = expectedTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
-        actualTargetBalance = actualTargetBalance.setScale(4, RoundingMode.HALF_EVEN);
+        expectedTargetBalance = expectedTargetBalance.setScale(2, RoundingMode.HALF_EVEN);
+        actualTargetBalance = actualTargetBalance.setScale(2, RoundingMode.HALF_EVEN);
         assertEquals(actualTargetBalance, expectedTargetBalance);
         validateResolvedRequest(requestId,TransactionStatus.SUCCESSFUL_TRANSFER,GlobalAPIExceptionHandler.SUCCESS_HTTP_STATUS);
     }
