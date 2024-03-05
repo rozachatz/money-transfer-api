@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Entity that represents a transaction between two {@link Account} entities.
+ * Entity that represents a financial transaction between two {@link Account} entities.
  */
 @Entity
 @Table(name = "transactions")

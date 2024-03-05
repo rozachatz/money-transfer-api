@@ -26,17 +26,17 @@ import java.util.UUID;
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     @Cacheable(cacheNames = "requestsCache", key = "#requestId")
-    public Request getRequest(UUID requestId) {
+    public Request getRequest(final UUID requestId) {
         return requestRepository.findById(requestId).orElse(null);
     }
 
     @CachePut(cacheNames = "requestsCache", key = "#requestId")
-    public Request submitRequest(UUID requestId, NewTransferDto newTransferDto) {
+    public Request submitRequest(final UUID requestId, final NewTransferDto newTransferDto) {
         return requestRepository.save(new Request(requestId, RequestStatus.SUBMITTED, newTransferDto.amount(), newTransferDto.sourceAccountId(), newTransferDto.targetAccountId()));
     }
 
     @CachePut(cacheNames = "requestsCache", key = "#requestId")
-    public Request resolveRequest(UUID requestId, Transaction transaction) throws MoneyTransferException {
+    public Request resolveRequest(final UUID requestId, final Transaction transaction) throws MoneyTransferException {
         Optional.ofNullable(transaction).orElseThrow(()->new ResourceNotFoundException("Request with id: "+requestId+" cannot be resolved. The provided Transaction does not exist."));
         requestRepository.resolveRequest(new ResolvedRequestDto(requestId,transaction));
         return new Request(requestId, RequestStatus.RESOLVED, transaction);

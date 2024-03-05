@@ -1,7 +1,7 @@
 package com.moneytransfer.enums;
 
-/*
-    All supported currencies
+/**
+ * All supported currencies.
  */
 public enum Currency {
     NOT_DEFINED,

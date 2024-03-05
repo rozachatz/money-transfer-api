@@ -26,10 +26,28 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class IdempotentTransferAspect {
+    /**
+     * The GetAccount service.
+     */
     private final GetAccountService getAccountService;
+    /**
+     * The Request service.
+     */
     private final RequestService requestService;
+    /**
+     * The transaction repository.
+     */
     private final TransactionRepository transactionRepository;
 
+    /**
+     * Processes the idempotent transfer request.
+     * @param proceedingJoinPoint
+     * @param idempotentTransferRequest
+     * @param requestId
+     * @param newTransferDto
+     * @return a (successful) Transaction
+     * @throws Throwable
+     */
     @Around("@annotation(idempotentTransferRequest) && execution(* transfer(java.util.UUID, com.moneytransfer.dto.NewTransferDto,..)) && args(requestId, newTransferDto,..)")
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction handleIdempotentTransferRequest(ProceedingJoinPoint proceedingJoinPoint, IdempotentTransferRequest idempotentTransferRequest, UUID requestId, NewTransferDto newTransferDto) throws Throwable {
@@ -103,7 +121,7 @@ public class IdempotentTransferAspect {
     private Transaction retrieveTransaction(final Request request) throws Throwable {
         Transaction transaction = request.getTransaction();
         return switch (transaction.getTransactionStatus()) {
-            case SUCCESSFUL_TRANSFER -> request.getTransaction();
+            case SUCCESSFUL_TRANSFER -> transaction;
             case FAILED_TRANSFER ->
                     throw new RequestConflictException(transaction.getMessage(), transaction.getHttpStatus());
         };

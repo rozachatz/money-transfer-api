@@ -38,8 +38,8 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
         ResponseEntity<ExchangeRatesResponse> responseEntity = new RestTemplate().exchange(url, HttpMethod.GET, null, ExchangeRatesResponse.class);
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             ExchangeRatesResponse response = responseEntity.getBody();
-            if (response != null && response.getData() != null) {
-                return amount.multiply(BigDecimal.valueOf(response.getData().get(targetCurrency.name())));
+            if (response != null && response.data() != null) {
+                return amount.multiply(BigDecimal.valueOf(response.data().get(targetCurrency.name())));
             }
         }
         throw new MoneyTransferException("Error occurred while exchanging currency!");

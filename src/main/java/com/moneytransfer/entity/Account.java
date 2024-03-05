@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Bank Account entity
+ * Entity that represents a bank account.
  */
 @Entity
 @Table(name = "accounts")

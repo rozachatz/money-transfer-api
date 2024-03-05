@@ -8,8 +8,5 @@ import java.util.Map;
 /**
  * Dto representing the response from the CurrencyExchange API.
  */
-@Getter
-@Setter
-public class ExchangeRatesResponse {
-    private Map<String, Double> data;
+public record ExchangeRatesResponse (Map<String, Double> data){
 }

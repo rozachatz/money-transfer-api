@@ -11,12 +11,7 @@ import java.util.UUID;
 /**
  * Dto that retains information for an {@link Account} entity.
  */
-@Getter
-@AllArgsConstructor
-public class GetAccountDto {
-    private UUID accountId;
-    private BigDecimal balance;
-    private Currency currency;
+public record GetAccountDto (UUID accountId, BigDecimal balance, Currency currency){
 }
 
 

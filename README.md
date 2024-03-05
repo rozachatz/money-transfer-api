@@ -6,7 +6,7 @@
 - [Data Model](#data-model)
 - [Architecture](#architecture)
 - [Testing](#testing)
-- [Docker Manual](#docker-manual)
+- [Docker Guidelines](#docker-guidelines)
 
 ## Introduction 
 This project includes a SpringBoot application for handling financial transactions 💸 .  
@@ -40,32 +40,53 @@ The Transaction entity represents a financial transaction between two accounts a
 | status            | status of the Transaction            |
 | message           | detailed information for the  status |
 
+### Request
+The Request entity represents an idempotent money transfer request:
+
+| Field             | Description                           |
+|-------------------|---------------------------------------|
+| id                | Unique identifier of the request      |
+| source_account_id | ID of the account sending the funds   |
+| target_account_id | ID of the account receiving the funds |
+| amount            | Amount being transferred              |
+| transaction       | transaction of a resolved Request     |
+
 ## Architecture
 ### Controller
 MoneyTransferAPIController
 
 ### Data Transfer Objects
-Container classes, read-only purposes.
+Records, ready-only.
+
+### Aspects
+#### IdempotentTransferAspect 
+The aspect that provides the functionality for an idempotent transfer request.
 
 ### Services
-#### TransactionManagementService
-Manages all transactions within the system. It is responsible for processing new transaction requests and for retrieving transaction resources. To enhance the reliability of the app, all transaction requests have been designed to be *idempotent*.
+#### GetTransactionService
+Gets all transactions within the system.
+
+#### GetAccountService
+Gets all accounts within the system.
 
 #### MoneyTransferService
-This microservice is invoked by the TransactionManagementService to facilitate a money transfer between two accounts and persist the new transaction into the system.
+The microservice that performs the money transfer operation.
+
+#### RequestService
+The microservice that gets, submits and resolves all requests.
 
 #### CurrencyExchangeService
-Performs currency exchange, if necessary, from the source account's currency to the target account's currency by retrieving the latest exchange rates from "https://freecurrencyapi.com/"! 💱
+Performs currency exchange from the source account's currency to the target account's currency by retrieving the latest exchange rates from "https://freecurrencyapi.com/"! 💱
 
-#### AccountManagementService
-Manages all accounts within the system.
+
 
 ### Entities
 - Transaction
 - Account
+- Request
 
 ### Repositories
-In this project, JPA repositories are used.
+JPA repositories.
 
 ### Exceptions
 @ControllerAdvice for handling all custom exceptions of the application.
@@ -79,7 +100,7 @@ At the moment, service integration tests using H2 embedded db are provided.
 - AC 3: Transfer in the same account
 - AC 4: Source/target account does not exist
   
-## Docker Manual
+## Docker Guidelines
 The application and database are now dockerized! Let the magic ✨ happen by following the instructions.
 
 First package the application into a JAR by executing:

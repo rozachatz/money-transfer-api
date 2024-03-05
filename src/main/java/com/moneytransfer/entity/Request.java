@@ -11,6 +11,9 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ *  Entity that represents an idempotent transfer request.
+ */
 @Entity
 @Table(name = "requests")
 @Getter

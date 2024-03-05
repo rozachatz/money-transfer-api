@@ -6,9 +6,6 @@ import lombok.Getter;
 
 import java.util.UUID;
 
-@AllArgsConstructor
-@Getter
-public class ResolvedRequestDto {
-    private UUID requestId;
-    private Transaction transaction;
+
+public record ResolvedRequestDto(UUID requestId, Transaction transaction){
 }
