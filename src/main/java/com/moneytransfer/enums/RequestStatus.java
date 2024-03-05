@@ -1,7 +1,9 @@
 package com.moneytransfer.enums;
 
+/**
+ * The status of a transfer request.
+ */
 public enum RequestStatus {
-    SUCCESS,
-    IN_PROGRESS,
-    FAILED
+    SUBMITTED,
+    RESOLVED
 }

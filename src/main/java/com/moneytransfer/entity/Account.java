@@ -5,27 +5,27 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Bank Account entity
+ * Entity that represents a bank account.
  */
 @Entity
 @Table(name = "accounts")
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public class Account {
+public class Account implements Serializable {
     @Version
     protected int version;
     @Id
-    private UUID id;
+    private UUID accountId;
+    private String ownerName;
     private BigDecimal balance;
     @Enumerated(EnumType.STRING)
     private Currency currency;
@@ -41,7 +41,7 @@ public class Account {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(accountId);
     }
 
     @Override
@@ -53,6 +53,6 @@ public class Account {
             return false;
         }
         Account other = (Account) obj;
-        return Objects.equals(id, other.id);
+        return Objects.equals(accountId, other.accountId);
     }
 }

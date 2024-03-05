@@ -1,43 +1,50 @@
 package com.moneytransfer.entity;
 
 import com.moneytransfer.enums.Currency;
+import com.moneytransfer.enums.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Entity that represents successful money transfers between two {@link Account}
+ * Entity that represents a financial transaction between two {@link Account} entities.
  */
 @Entity
 @Table(name = "transactions")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public class Transaction {
+public class Transaction implements Serializable {
     @Id
-    private UUID id;
+    private UUID transactionId;
 
-    @ManyToOne()
-    @JoinColumn(name = "source_account_id", referencedColumnName = "id")
+    private TransactionStatus transactionStatus;
+    @ManyToOne
+    @JoinColumn(name = "source_account_id", referencedColumnName = "accountId")
     private Account sourceAccount;
 
-    @ManyToOne()
-    @JoinColumn(name = "target_account_id", referencedColumnName = "id")
+    @ManyToOne
+    @JoinColumn(name = "target_account_id", referencedColumnName = "accountId")
     private Account targetAccount;
 
     private BigDecimal amount;
 
-    @Enumerated(EnumType.STRING)
+    private String message;
+
     private Currency currency;
+
+    private HttpStatus httpStatus;
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(transactionId);
     }
 
     @Override
@@ -49,6 +56,6 @@ public class Transaction {
             return false;
         }
         Transaction other = (Transaction) obj;
-        return Objects.equals(id, other.id);
+        return Objects.equals(transactionId, other.transactionId);
     }
 }

@@ -23,14 +23,23 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
     @Value("${freecurrencyapi.apiUrl}")
     private String apiUrl;
 
+    /**
+     * Performs the currency exchange.
+     *
+     * @param amount
+     * @param sourceCurrency
+     * @param targetCurrency
+     * @return
+     * @throws MoneyTransferException
+     */
     public BigDecimal exchangeCurrency(BigDecimal amount, final Currency sourceCurrency, final Currency targetCurrency) throws MoneyTransferException {
         var subUrl = apiUrl.concat(apiKey);
         var url = String.format("%1$s&currencies=%2$s&base_currency=%3$s", subUrl, targetCurrency.name(), sourceCurrency.name());
         ResponseEntity<ExchangeRatesResponse> responseEntity = new RestTemplate().exchange(url, HttpMethod.GET, null, ExchangeRatesResponse.class);
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             ExchangeRatesResponse response = responseEntity.getBody();
-            if (response != null && response.getData() != null) {
-                return amount.multiply(BigDecimal.valueOf(response.getData().get(targetCurrency.name())));
+            if (response != null && response.data() != null) {
+                return amount.multiply(BigDecimal.valueOf(response.data().get(targetCurrency.name())));
             }
         }
         throw new MoneyTransferException("Error occurred while exchanging currency!");

@@ -4,11 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Dto for Exceptions
+ * Dto for logging and exception handling
  */
-@Getter
-@AllArgsConstructor
-public class ErrorResponseDto {
-    private int HttpStatusValue;
-    private String message;
+public record ErrorResponseDto (int HttpStatusValue, String message){
 }
